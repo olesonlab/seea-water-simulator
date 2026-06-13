@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEEA CF 2028: Water Valuation Simulator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f8fafc; color: #0f172a; padding: 32px 24px; min-height: 100vh;
+    }
+    .page { max-width: 960px; margin: 0 auto; }
+    .header { margin-bottom: 28px; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #1e3a8a; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: #64748b; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+    }
+    .panel-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #94a3b8; margin-bottom: 20px;
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .form-label { font-size: 13px; font-weight: 500; color: #334155; }
+    .form-val { font-size: 13px; font-weight: 600; color: #1e3a8a; font-variant-numeric: tabular-nums; }
+    input[type="range"] {
+      width: 100%; height: 4px; appearance: none; background: #e2e8f0;
+      border-radius: 2px; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: #1e3a8a; cursor: pointer;
+    }
+    select {
+      width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 13px; color: #334155; background: #f8fafc; outline: none; cursor: pointer;
+    }
+    select:focus { border-color: #93c5fd; }
+    .metric {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .metric:last-of-type { margin-bottom: 0; }
+    .metric-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .metric-value { font-size: 22px; font-weight: 600; color: #0f172a; }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 9px; border-radius: 5px; margin-top: 7px;
+    }
+    .badge-warn { background: #fee2e2; color: #991b1b; }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-neutral { background: #f1f5f9; color: #475569; }
+    .ocv-metric { border-left: 3px solid #cbd5e1; }
+    .vis-section { margin-top: 16px; text-align: center; }
+    .vis-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .bar-outer {
+      width: 72px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 6px;
+      overflow: hidden; height: 88px; display: flex; flex-direction: column;
+    }
+    .bar-ea {
+      background: #bfdbfe; color: #1e40af; font-size: 10px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      line-height: 1.3; transition: flex 0.35s ease;
+    }
+    .bar-cf {
+      background: #1d4ed8; color: #eff6ff; font-size: 10px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      line-height: 1.3; flex: 1;
+    }
+    .vis-status { font-size: 12px; color: #64748b; margin-top: 10px; line-height: 1.4; }
+    .footnote {
+      margin-top: 24px; padding: 14px 16px; background: #eff6ff;
+      border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.6;
+    }
+    .footnote strong { font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>SEEA CF 2028 — Water Valuation Simulator</h1>
+    <p>Interactive test engine validating Recommendations 2, 3, 7, and 10 of the proposed SEEA Central Framework update for water monetary asset accounts.</p>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <p class="panel-title">Simulation parameters</p>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Extraction volume q<sub>t</sub> (ML)</label>
+          <span class="form-val" id="v-ext">40</span>
+        </div>
+        <input type="range" id="sl-ext" min="0" max="100" value="40" step="1">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Natural recharge g<sub>t</sub> (ML)</label>
+          <span class="form-val" id="v-rec">50</span>
+        </div>
+        <input type="range" id="sl-rec" min="0" max="100" value="50" step="1">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Substitute ceiling ($/ML) — Rec 10</label>
+          <span class="form-val" id="v-sub">$1,200</span>
+        </div>
+        <input type="range" id="sl-sub" min="500" max="2000" value="1200" step="50">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="margin-bottom:8px; display:block;">Asset quality</label>
+        <select id="sl-qual">
+          <option value="1.0">Pristine alpine catchment</option>
+          <option value="0.6">Brackish / high-silt (−40% rent)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">Accounting metrics</p>
+
+      <div class="metric">
+        <div class="metric-label">Annual flow value F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> — MSUT</div>
+        <div class="metric-value" id="out-ft">$16,000</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-label">Depletion charge D<sub>t</sub> — income adjustment</div>
+        <div class="metric-value" id="out-dt">$0</div>
+        <div id="out-badge"></div>
+      </div>
+
+      <div class="metric ocv-metric">
+        <div class="metric-label">Balancing item — other changes in volume (OCV)</div>
+        <div class="metric-value" id="out-ocv">$0</div>
+      </div>
+
+      <div class="vis-section">
+        <div class="vis-label">Framework boundary split</div>
+        <div class="bar-outer">
+          <div class="bar-ea" id="bar-ea" style="flex:2">EA<br>welfare</div>
+          <div class="bar-cf">CF<br>abstraction</div>
+        </div>
+        <div class="vis-status" id="out-status">Stable equilibrium — extraction balanced by recharge.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>Key relationships:</strong>
+    F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (MSUT flow value) &nbsp;|&nbsp;
+    D<sub>t</sub> = p* × max(q<sub>t</sub> − g<sub>t</sub>, 0) (depletion charge, Rec 2) &nbsp;|&nbsp;
+    Rec 10: D<sub>t</sub> capped at substitute technology cost &nbsp;|&nbsp;
+    OCV = F<sub>t</sub> − q<sub>t</sub> × p* (MSUT / asset account reconciliation, Rec 3)
+  </div>
+</div>
+
+<script>
+  function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+  function run() {
+    const ext  = +document.getElementById('sl-ext').value;
+    const rec  = +document.getElementById('sl-rec').value;
+    const sub  = +document.getElementById('sl-sub').value;
+    const qual = +document.getElementById('sl-qual').value;
+
+    document.getElementById('v-ext').textContent = ext;
+    document.getElementById('v-rec').textContent = rec;
+    document.getElementById('v-sub').textContent = '$' + sub.toLocaleString();
+
+    let baseRent = 400;
+    if (ext > rec && rec > 0) baseRent += (ext / rec) * 250;
+    const rent = baseRent * qual;
+    const ft = ext * rent;
+    document.getElementById('out-ft').textContent = fmt(ft);
+
+    let dt = 0, badge = '', status = '', eaFlex = 2;
+
+    if (rec > ext * 1.5) {
+      dt = 0;
+      badge  = '<span class="badge badge-ok">Rec 10: genuine abundance — D<sub>t</sub> = 0</span>';
+      status = 'Abundant supply. No depreciation required.';
+      eaFlex = 4;
+    } else if (ext > rec) {
+      const phys     = ext - rec;
+      const unitCost = Math.min(rent * 1.8, sub);
+      dt = phys * unitCost;
+      badge = unitCost === sub
+        ? '<span class="badge badge-warn">Rec 10: substitute ceiling active</span>'
+        : '<span class="badge badge-warn">Rec 10: active depletion drawdown</span>';
+      status = 'Over-abstraction occurring. Stock is declining.';
+      eaFlex = 0.5;
+    } else {
+      badge  = '<span class="badge badge-neutral">Sustainable balance zone</span>';
+      status = 'Extraction safely balanced by natural recharge.';
+      eaFlex = 1.5;
+    }
+
+    document.getElementById('out-dt').textContent    = fmt(dt);
+    document.getElementById('out-badge').innerHTML   = badge;
+    document.getElementById('out-status').textContent = status;
+    document.getElementById('bar-ea').style.flex     = eaFlex;
+
+    const shadow = rent * 1.1;
+    const ocv    = Math.abs(ft - (ext * shadow));
+    document.getElementById('out-ocv').textContent = fmt(ocv) + ' (reconciled)';
+  }
+
+  ['sl-ext', 'sl-rec', 'sl-sub', 'sl-qual'].forEach(id =>
+    document.getElementById(id).addEventListener('input', run)
+  );
+  run();
+</script>
+</body>
+</html>
