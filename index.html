@@ -84,7 +84,7 @@
 <div class="page">
   <div class="header">
     <h1>SEEA CF 2028 — Water Valuation Simulator</h1>
-    <p>Interactive test engine validating Recommendations 2, 3, 7, and 10 of the proposed SEEA Central Framework update for water monetary asset accounts.</p>
+    <p>Interactive test engine for three recommendations in the proposed SEEA Central Framework update for water monetary asset accounts: Rec 2 (Valuation Targets — V, F<sub>t</sub>, D<sub>t</sub>), Rec 3 (MSUT and Asset Account Reconciliation), and Rec 8 (Valuation at the Extremes — the substitute ceiling).</p>
   </div>
 
   <div class="grid">
@@ -109,7 +109,7 @@
 
       <div class="form-group">
         <div class="form-row">
-          <label class="form-label">Substitute ceiling ($/ML) — Rec 10</label>
+          <label class="form-label">Substitute ceiling ($/ML) — Rec 8</label>
           <span class="form-val" id="v-sub">$1,200</span>
         </div>
         <input type="range" id="sl-sub" min="500" max="2000" value="1200" step="50">
@@ -157,9 +157,9 @@
   <div class="footnote">
     <strong>Key relationships:</strong>
     F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (MSUT flow value) &nbsp;|&nbsp;
-    D<sub>t</sub> = p* × max(q<sub>t</sub> − g<sub>t</sub>, 0) (depletion charge, Rec 2) &nbsp;|&nbsp;
-    Rec 10: D<sub>t</sub> capped at substitute technology cost &nbsp;|&nbsp;
-    OCV = F<sub>t</sub> − q<sub>t</sub> × p* (MSUT / asset account reconciliation, Rec 3)
+    D<sub>t</sub> = p* × max(0, q<sub>t</sub> − g<sub>t</sub>) (depletion charge, eq. D.5 — Rec 2 names D<sub>t</sub> a valuation target) &nbsp;|&nbsp;
+    Rec 8 (Valuation at the Extremes): D<sub>t</sub> capped at the substitute technology cost as the stock nears exhaustion &nbsp;|&nbsp;
+    OCV = F<sub>t</sub> − q<sub>t</sub> × p* (Rec 3, MSUT / asset account reconciliation)
   </div>
 </div>
 
@@ -186,7 +186,7 @@
 
     if (rec > ext * 1.5) {
       dt = 0;
-      badge  = '<span class="badge badge-ok">Rec 10: genuine abundance — D<sub>t</sub> = 0</span>';
+      badge  = '<span class="badge badge-ok">Case 2 — sustainable, D<sub>t</sub> = 0 (eq. D.5)</span>';
       status = 'Abundant supply. No depreciation required.';
       eaFlex = 4;
     } else if (ext > rec) {
@@ -194,8 +194,8 @@
       const unitCost = Math.min(rent * 1.8, sub);
       dt = phys * unitCost;
       badge = unitCost === sub
-        ? '<span class="badge badge-warn">Rec 10: substitute ceiling active</span>'
-        : '<span class="badge badge-warn">Rec 10: active depletion drawdown</span>';
+        ? '<span class="badge badge-warn">Rec 8: substitute ceiling active</span>'
+        : '<span class="badge badge-warn">Case 1 — depletion charge (eq. D.5)</span>';
       status = 'Over-abstraction occurring. Stock is declining.';
       eaFlex = 0.5;
     } else {
