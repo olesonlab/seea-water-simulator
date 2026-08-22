@@ -78,6 +78,17 @@
       border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.6;
     }
     .footnote strong { font-weight: 600; }
+    .annexe-ref {
+      margin-top: 14px; padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; font-size: 12px; color: #334155; line-height: 1.6;
+    }
+    .annexe-ref-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #94a3b8; margin-bottom: 8px;
+    }
+    .annexe-item { margin-bottom: 6px; }
+    .annexe-item:last-child { margin-bottom: 0; }
+    .annexe-item strong { color: #1e3a8a; }
   </style>
 </head>
 <body>
@@ -163,6 +174,16 @@
     <br><br>
     <strong>Notation:</strong> this tool uses the shadow price p* throughout, for simplicity. The guidance note’s eq. D.5 uses p̄, the operational proxy for p*, since p* is rarely estimated directly in practice (§3.5.1). Results here approximate what compilers would produce using p̄.
   </div>
+
+  <div class="annexe-ref">
+    <div class="annexe-ref-title">Annex E worked examples (same formulas, real numbers)</div>
+    <div class="annexe-item"><strong>Ex 1</strong> — Renewable aquifer, q<sub>t</sub>=10 &gt; g<sub>t</sub>=8 km³/yr: D<sub>t</sub>=Int$500M. The constant-rent perpetuity decouples p̄ from R<sub>t</sub>, so OCV<sub>t</sub>=+Int$2,500M even under over-extraction.</div>
+    <div class="annexe-item"><strong>Ex 2</strong> — Fossil aquifer, g<sub>t</sub>=0: all extraction depletes. D<sub>t</sub>=Int$5,000M exceeds F<sub>t</sub>=Int$4,000M — wealth falls faster than income is earned.</div>
+    <div class="annexe-item"><strong>Ex 3</strong> — Over-extracted surface water: a smaller over-extraction volume than Ex 2, but a higher p̄=Int$2.25/m³, gives both a larger D<sub>t</sub> (Int$6,750M) and a larger OCV<sub>t</sub> gap.</div>
+    <div class="annexe-item"><strong>Ex 4</strong> — Near exhaustion (S=16 km³, ΔS/S=31%): uncapped D<sub>t</sub> would be Int$31,250M. Rec 8's substitute ceiling (p<sub>substitute</sub>=Int$2.00/m³) caps it at Int$10,000M — the scenario this tool's substitute-ceiling slider is built to reproduce.</div>
+    <div class="annexe-item"><strong>Ex 5</strong> — OCV<sub>t</sub> decomposition: falls from +Int$2,500M to +Int$1,000M as R<sub>t</sub> drops from Int$0.50 to Int$0.20/m³, tracking the gap between current rent and the capitalized shadow price.</div>
+    <div class="annexe-item"><strong>Ex 6</strong> — q<sub>t</sub>=8 &lt; g<sub>t</sub>=10 km³/yr: the raw D<sub>t</sub> calculation is negative, floored to zero (Case 3). The addition instead raises NDP by Int$320M.</div>
+  </div>
 </div>
 
 <script>
@@ -188,7 +209,7 @@
 
     if (rec > ext * 1.5) {
       dt = 0;
-      badge  = '<span class="badge badge-ok">Case 2 — sustainable, D<sub>t</sub> = 0 (eq. D.5)</span>';
+      badge  = '<span class="badge badge-ok">Case 2 — sustainable, D<sub>t</sub> = 0 (eq. D.5; cf. Annex E Ex. 6)</span>';
       status = 'Abundant supply. No depreciation required.';
       eaFlex = 4;
     } else if (ext > rec) {
@@ -196,12 +217,12 @@
       const unitCost = Math.min(rent * 1.8, sub);
       dt = phys * unitCost;
       badge = unitCost === sub
-        ? '<span class="badge badge-warn">Rec 8: substitute ceiling active</span>'
-        : '<span class="badge badge-warn">Case 1 — depletion charge (eq. D.5)</span>';
+        ? '<span class="badge badge-warn">Rec 8: substitute ceiling active (cf. Annex E Ex. 4, Case B)</span>'
+        : '<span class="badge badge-warn">Case 1 — depletion charge (eq. D.5; cf. Annex E Ex. 1–3)</span>';
       status = 'Over-abstraction occurring. Stock is declining.';
       eaFlex = 0.5;
     } else {
-      badge  = '<span class="badge badge-neutral">Sustainable balance zone</span>';
+      badge  = '<span class="badge badge-neutral">Sustainable balance zone (cf. Annex E Ex. 6)</span>';
       status = 'Extraction safely balanced by natural recharge.';
       eaFlex = 1.5;
     }
