@@ -1,6 +1,387 @@
-&lt;!DOCTYPE html&gt;
-&lt;html lang="en"&gt;
-&lt;head&gt;
-  &lt;meta charset="UTF-8"&gt;
-  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-  &lt;title&gt;SEEA CF 2028: Water Valuation Simulator&lt;/title&gt;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEEA CF 2028: Water Valuation Simulator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f8fafc; color: #0f172a; padding: 32px 24px; min-height: 100vh;
+    }
+    .page { max-width: 980px; margin: 0 auto; }
+    .header { margin-bottom: 20px; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #1e3a8a; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: #64748b; line-height: 1.5; }
+    .panel {
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
+    }
+    .panel-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #94a3b8; margin-bottom: 20px;
+    }
+    .rec-panel {
+      margin-bottom: 20px; padding: 16px 18px; background: #ffffff; border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .rec-panel-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #94a3b8; margin-bottom: 10px;
+    }
+    .rec-item { font-size: 13px; color: #334155; line-height: 1.55; margin-bottom: 8px; }
+    .rec-item:last-child { margin-bottom: 0; }
+    .rec-item strong { color: #1e3a8a; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 18px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .form-label { font-size: 13px; font-weight: 500; color: #334155; }
+    .form-val { font-size: 13px; font-weight: 600; color: #1e3a8a; font-variant-numeric: tabular-nums; }
+    input[type="range"] {
+      width: 100%; height: 4px; appearance: none; background: #e2e8f0;
+      border-radius: 2px; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: #1e3a8a; cursor: pointer;
+    }
+    input[type="range"].neg-ok::-webkit-slider-thumb { background: #7c3aed; }
+    .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+    .preset-btn {
+      font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff6ff;
+      border: 1px solid #bfdbfe; border-radius: 6px; padding: 5px 9px; cursor: pointer;
+    }
+    .preset-btn:hover { background: #dbeafe; }
+    .preset-btn.drought { color: #7c2d12; background: #fff7ed; border-color: #fed7aa; }
+    .preset-btn.drought:hover { background: #ffedd5; }
+    .pin-row { margin-top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pin-btn {
+      font-size: 11px; font-weight: 600; color: #166534; background: #f0fdf4;
+      border: 1px solid #bbf7d0; border-radius: 6px; padding: 5px 9px; cursor: pointer;
+    }
+    .pin-btn:hover { background: #dcfce7; }
+    .pin-status { font-size: 11px; color: #64748b; }
+    .metric {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 12px 14px; margin-bottom: 10px;
+    }
+    .metric:last-of-type { margin-bottom: 0; }
+    .metric-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .metric-value { font-size: 20px; font-weight: 600; color: #0f172a; }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 9px; border-radius: 5px; margin-top: 7px;
+    }
+    .badge-warn { background: #fee2e2; color: #991b1b; }
+    .badge-ok { background: #dcfce7; color: #166534; }
+    .badge-neutral { background: #f1f5f9; color: #475569; }
+    .badge-addition { background: #dbeafe; color: #1e40af; }
+    .ocv-metric { border-left: 3px solid #cbd5e1; }
+    .advisory {
+      margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.5;
+    }
+    .advisory-drought { background: #fff7ed; border: 1px solid #fed7aa; color: #7c2d12; }
+    .advisory-validity { background: #fefce8; border: 1px solid #fde68a; color: #713f12; }
+    .footnote {
+      margin-top: 0; padding: 14px 16px; background: #eff6ff;
+      border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.6; margin-bottom: 20px;
+    }
+    .footnote strong { font-weight: 600; }
+    .annexe-ref {
+      padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 8px; font-size: 12px; color: #334155; line-height: 1.6;
+    }
+    .annexe-ref-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+      color: #94a3b8; margin-bottom: 8px;
+    }
+    .annexe-item { margin-bottom: 6px; }
+    .annexe-item:last-child { margin-bottom: 0; }
+    .annexe-item strong { color: #1e3a8a; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>SEEA CF 2028 — Water Valuation Simulator</h1>
+    <p>Runs the guidance note's own valuation chain — F<sub>t</sub> → V → p̄ → D<sub>t</sub> — so the Load-Example buttons below reproduce Annex E's numbers exactly, not just approximately.</p>
+  </div>
+
+  <div class="rec-panel">
+    <div class="rec-panel-title">What the three recommendations say</div>
+    <div class="rec-item"><strong>Rec 2 — Valuation Targets:</strong> distinguish three separate valuation targets for water — stock value V (balance sheet), flow value F<sub>t</sub> (MSUT), and depletion value D<sub>t</sub> (NDP/NNI) — and specify which one each accounting purpose requires.</div>
+    <div class="rec-item"><strong>Rec 3 — MSUT and Asset Account Reconciliation:</strong> compile the monetary supply-use table and the water asset account jointly. MSUT values extraction at the resource rent F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub>; the asset account values it at q<sub>t</sub> × p̄. Report the gap between them as OCV, with a narrative explanation.</div>
+    <div class="rec-item"><strong>Rec 8 — Valuation at the Extremes:</strong> as a resource nears exhaustion, cap the depletion charge at the unit cost of the cheapest accessible substitute technology — no rational user would keep paying more than that to extract.</div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <p class="panel-title">Simulation parameters</p>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Opening stock S₀ (km³)</label>
+          <span class="form-val" id="v-s0">500</span>
+        </div>
+        <input type="range" id="sl-s0" min="10" max="600" value="500" step="5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Extraction q<sub>t</sub> (km³/yr)</label>
+          <span class="form-val" id="v-ext">10</span>
+        </div>
+        <input type="range" id="sl-ext" min="0" max="25" value="10" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Net natural recharge g<sub>t</sub> (km³/yr)</label>
+          <span class="form-val" id="v-rec">8</span>
+        </div>
+        <input type="range" class="neg-ok" id="sl-rec" min="-5" max="15" value="8" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Resource rent R<sub>t</sub> (Int$/m³)</label>
+          <span class="form-val" id="v-rent">0.50</span>
+        </div>
+        <input type="range" id="sl-rent" min="0.05" max="1.00" value="0.50" step="0.05">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Discount rate r (%)</label>
+          <span class="form-val" id="v-disc">4.0</span>
+        </div>
+        <input type="range" id="sl-disc" min="1" max="8" value="4" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <label class="form-label">Substitute ceiling p<sub>substitute</sub> (Int$/m³) — Rec 8</label>
+          <span class="form-val" id="v-sub">2.00</span>
+        </div>
+        <input type="range" id="sl-sub" min="0.10" max="3.00" value="2.00" step="0.05">
+      </div>
+
+      <div class="preset-row">
+        <button class="preset-btn" data-preset="ex1">Load Ex 1</button>
+        <button class="preset-btn" data-preset="ex2">Load Ex 2</button>
+        <button class="preset-btn" data-preset="ex3">Load Ex 3</button>
+        <button class="preset-btn" data-preset="ex5a">Load Ex 5A</button>
+        <button class="preset-btn" data-preset="ex5b">Load Ex 5B</button>
+        <button class="preset-btn" data-preset="ex6">Load Ex 6</button>
+        <button class="preset-btn drought" data-preset="drought">Drought demo (g<sub>t</sub>&lt;0)</button>
+      </div>
+
+      <div class="pin-row">
+        <button class="pin-btn" id="btn-pin">📌 Pin current p̄ as opening price</button>
+        <button class="pin-btn" id="btn-unpin" style="display:none; color:#991b1b; background:#fef2f2; border-color:#fecaca;">✕ Clear pin</button>
+        <span class="pin-status" id="pin-status">Not pinned — REV<sub>t</sub> = 0 (single-period snapshot). Pin, then move R<sub>t</sub>, to see REV<sub>t</sub> reproduce Annex E Ex. 5's cross-period comparison.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="panel-title">Accounting metrics</p>
+
+      <div class="metric">
+        <div class="metric-label">Annual flow value F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> — MSUT (Rec 2)</div>
+        <div class="metric-value" id="out-ft">$5,000M</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-label">Stock asset value V = F<sub>t</sub> / r (eq. D.3) — unit price p̄ = V/S₀ (eq. D.4)</div>
+        <div class="metric-value" id="out-v">$125,000M</div>
+        <div class="metric-label" style="margin-top:4px;">p̄ = <span id="out-pbar">$0.250</span>/m³</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-label" id="out-dt-label">Depletion charge D<sub>t</sub> (eq. D.5) — income adjustment</div>
+        <div class="metric-value" id="out-dt">$500M</div>
+        <div id="out-badge"></div>
+        <div id="out-advisory"></div>
+      </div>
+
+      <div class="metric ocv-metric">
+        <div class="metric-label">Balancing item OCV<sub>t</sub> = F<sub>t</sub> − (q<sub>t</sub> × p̄) — Rec 3</div>
+        <div class="metric-value" id="out-ocv">$2,500M</div>
+      </div>
+
+      <div class="metric">
+        <div class="metric-label">Closing stock value V<sub>t+1</sub> = V<sub>t</sub> + Addition<sub>t</sub> − D<sub>t</sub> + REV<sub>t</sub> + OCV<sub>t</sub> (eq. D.6)</div>
+        <div class="metric-value" id="out-vnext">$127,000M</div>
+        <div class="metric-label" id="out-rev-note" style="margin-top:4px;">REV<sub>t</sub> = $0M (not pinned)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>Key relationships:</strong>
+    F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (eq. D.2, MSUT flow value) &nbsp;|&nbsp;
+    V = F<sub>t</sub> / r (eq. D.3, perpetuity) &nbsp;|&nbsp;
+    p̄ = V / S₀ (eq. D.4, operational proxy for p*) &nbsp;|&nbsp;
+    D<sub>t</sub> = min(p̄, p<sub>substitute</sub>) × max(0, q<sub>t</sub> − g<sub>t</sub>) (eq. D.5, Rec 8 cap) &nbsp;|&nbsp;
+    Addition<sub>t</sub> = p̄ × max(0, g<sub>t</sub> − q<sub>t</sub>) (eq. D.6, Case 3) &nbsp;|&nbsp;
+    OCV<sub>t</sub> = F<sub>t</sub> − q<sub>t</sub> × p̄ (Rec 3)
+  </div>
+
+  <div class="annexe-ref">
+    <div class="annexe-ref-title">Annex E worked examples — reproduced by the Load-Example buttons (Ex 4 is reference-only, see below)</div>
+    <div class="annexe-item"><strong>Ex 1</strong> — Renewable aquifer, q<sub>t</sub>=10 &gt; g<sub>t</sub>=8 km³/yr: D<sub>t</sub>=Int$500M. The constant-rent perpetuity decouples p̄ from R<sub>t</sub>, so OCV<sub>t</sub>=+Int$2,500M even under over-extraction.</div>
+    <div class="annexe-item"><strong>Ex 2</strong> — Fossil aquifer, g<sub>t</sub>=0: all extraction depletes. D<sub>t</sub>=Int$5,000M exceeds F<sub>t</sub>=Int$4,000M — wealth falls faster than income is earned.</div>
+    <div class="annexe-item"><strong>Ex 3</strong> — Over-extracted surface water: a smaller over-extraction volume than Ex 2, but a higher p̄=Int$2.25/m³, gives both a larger D<sub>t</sub> (Int$6,750M) and a larger OCV<sub>t</sub> gap.</div>
+    <div class="annexe-item"><strong>Ex 4</strong> — Near exhaustion (S=16 km³, ΔS/S=31%): uncapped D<sub>t</sub> would be Int$31,250M. Rec 8's substitute ceiling (p<sub>substitute</sub>=Int$2.00/m³) caps it at Int$10,000M. This example tracks a stock trajectory at fixed V rather than a single q<sub>t</sub>/g<sub>t</sub> period, so it isn't one of the Load-Example presets — but the substitute-ceiling slider above models the same cap mechanism; push q<sub>t</sub>−g<sub>t</sub> and R<sub>t</sub> up until p̄ exceeds p<sub>substitute</sub> to see it bind.</div>
+    <div class="annexe-item"><strong>Ex 5</strong> — OCV<sub>t</sub> decomposition: falls from +Int$2,500M (Scenario A, R<sub>t</sub>=0.50) to +Int$1,000M (Scenario B, R<sub>t</sub>=0.20) as R<sub>t</sub> drops, tracking the gap between current rent and the capitalized shadow price. Load Ex 5A, pin its p̄, then Load Ex 5B to see REV<sub>t</sub>=−Int$75,000M reproduce the doc's cross-scenario comparison.</div>
+    <div class="annexe-item"><strong>Ex 6</strong> — q<sub>t</sub>=8 &lt; g<sub>t</sub>=10 km³/yr: the raw D<sub>t</sub> calculation is negative, floored to zero (Case 3). The addition instead raises NDP by Int$320M.</div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const sliders = { s0: $('sl-s0'), ext: $('sl-ext'), rec: $('sl-rec'), rent: $('sl-rent'), disc: $('sl-disc'), sub: $('sl-sub') };
+
+  function fmtM(n) {
+    const sign = n < 0 ? '−' : '';
+    return sign + '$' + Math.round(Math.abs(n)).toLocaleString() + 'M';
+  }
+  function fmt3(n) { return '$' + n.toFixed(3); }
+
+  let pin = null; // { pbar, s0 }
+
+  function run() {
+    const s0   = +sliders.s0.value;
+    const qt   = +sliders.ext.value;
+    const gt   = +sliders.rec.value;
+    const rt   = +sliders.rent.value;
+    const disc = +sliders.disc.value / 100;
+    const sub  = +sliders.sub.value;
+
+    $('v-s0').textContent   = s0;
+    $('v-ext').textContent  = qt;
+    $('v-rec').textContent  = gt;
+    $('v-rent').textContent = rt.toFixed(2);
+    $('v-disc').textContent = (disc * 100).toFixed(1);
+    $('v-sub').textContent  = sub.toFixed(2);
+
+    // ---- the doc's own valuation chain (eq. D.2-D.4), reproduced exactly ----
+    const ft   = rt * qt * 1000;              // Int$M  (eq. D.2)
+    const V    = ft / disc;                    // Int$M  (eq. D.3, perpetuity)
+    const pbar = (V / s0) / 1000;               // Int$/m3 (eq. D.4)
+
+    $('out-ft').textContent   = fmtM(ft);
+    $('out-v').textContent    = fmtM(V);
+    $('out-pbar').textContent = fmt3(pbar);
+
+    // ---- Case 1/2/3 (§3.6.1), with a tolerance band on the qt/gt ratio when gt>0 ----
+    const netFlow = qt - gt;
+    let caseNum;
+    if (gt > 0) {
+      const ratio = qt / gt;
+      if (ratio >= 0.95 && ratio <= 1.05) caseNum = 2;
+      else caseNum = qt > gt ? 1 : 3;
+    } else {
+      caseNum = netFlow > 0 ? 1 : 2; // gt<=0: any extraction, or a pure natural loss, reads as Case 1
+    }
+
+    let dt = 0, additionT = 0, badge = '', advisory = '';
+
+    if (caseNum === 1) {
+      const unitCost = Math.min(pbar, sub);
+      dt = unitCost * netFlow * 1000;
+      const capped = unitCost === sub && sub < pbar;
+      badge = capped
+        ? '<span class="badge badge-warn">Rec 8: substitute ceiling active (cf. Annex E Ex. 4, Case B)</span>'
+        : '<span class="badge badge-warn">Case 1 — depletion charge (eq. D.5; cf. Annex E Ex. 1–3)</span>';
+    } else if (caseNum === 3) {
+      additionT = pbar * (gt - qt) * 1000;
+      badge = '<span class="badge badge-addition">Case 3 — under-extraction, Addition<sub>t</sub> (eq. D.6; cf. Annex E Ex. 6)</span>';
+    } else {
+      badge = '<span class="badge badge-ok">Case 2 — sustainable, D<sub>t</sub> = 0 (eq. D.5)</span>';
+    }
+
+    // ---- Negative-recharge advisory: raised as TC Question 2, not yet resolved ----
+    if (gt < 0) {
+      advisory += '<div class="advisory advisory-drought"><strong>g<sub>t</sub> &lt; 0:</strong> net natural recharge is negative — natural losses (evapotranspiration, natural outflow) exceed additions, before any extraction. The formula still runs (max(0, q<sub>t</sub>−g<sub>t</sub>) just grows), booking the full natural loss as if it were extraction-driven. TC Question 2 (§3.6.1, §5.4) asks the Technical Committee whether this should instead route through the physical/monetary other-changes-in-volume line (§3.2.3). Posed, not resolved — this demo runs the formula as currently written.</div>';
+    }
+
+    // ---- ΔS/S validity warning, echoing Annex E Ex. 4's own caveat ----
+    const deltaSS = s0 > 0 ? Math.abs(netFlow) / s0 : 0;
+    if (caseNum === 1 && deltaSS > 0.10) {
+      advisory += '<div class="advisory advisory-validity"><strong>ΔS/S = ' + (deltaSS*100).toFixed(0) + '%:</strong> the Harberger/perpetuity approximation is losing validity here (cf. Annex E Ex. 4, where ΔS/S=31% required direct p*=∂V/∂S estimation instead of this tool\'s p̄=V/S shortcut).</div>';
+    }
+
+    $('out-dt-label').textContent = caseNum === 3
+      ? 'Additionₜ (eq. D.6) — Case 3, raises NDP'
+      : 'Depletion charge Dₜ (eq. D.5) — income adjustment';
+    $('out-dt').textContent = caseNum === 3 ? fmtM(additionT) : fmtM(dt);
+    $('out-badge').innerHTML = badge;
+    $('out-advisory').innerHTML = advisory;
+
+    // ---- OCV (Rec 3) ----
+    const ocv = ft - qt * pbar * 1000;
+    $('out-ocv').textContent = fmtM(ocv);
+
+    // ---- REV (only nonzero once an opening price is pinned — Annex E Ex. 5) ----
+    let rev = 0;
+    if (pin) {
+      rev = pin.s0 * (pbar - pin.pbar) * 1000;
+      $('out-rev-note').textContent = 'REVₜ = ' + fmtM(rev) + ' vs. pinned p̄=' + fmt3(pin.pbar) + '/m³ at S=' + pin.s0 + ' km³';
+    } else {
+      $('out-rev-note').textContent = 'REVₜ = $0M (not pinned)';
+    }
+
+    const vnext = V - dt + additionT + rev + ocv;
+    $('out-vnext').textContent = fmtM(vnext);
+  }
+
+  function setSliders(v) {
+    sliders.s0.value = v.s0; sliders.ext.value = v.qt; sliders.rec.value = v.gt;
+    sliders.rent.value = v.rt; sliders.disc.value = v.disc;
+    if (v.sub !== undefined) sliders.sub.value = v.sub;
+    run();
+  }
+
+  const PRESETS = {
+    ex1:     { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
+    ex2:     { s0: 100, qt: 5,  gt: 0,  rt: 0.80, disc: 4, sub: 5.00 },
+    ex3:     { s0: 50,  qt: 15, gt: 12, rt: 0.30, disc: 4, sub: 5.00 },
+    ex5a:    { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
+    ex5b:    { s0: 500, qt: 10, gt: 8,  rt: 0.20, disc: 4, sub: 5.00 },
+    ex6:     { s0: 500, qt: 8,  gt: 10, rt: 0.40, disc: 4, sub: 5.00 },
+    drought: { s0: 200, qt: 5,  gt: -2, rt: 0.40, disc: 4, sub: 2.00 },
+  };
+
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => setSliders(PRESETS[btn.dataset.preset]));
+  });
+
+  $('btn-pin').addEventListener('click', () => {
+    const s0   = +sliders.s0.value;
+    const qt   = +sliders.ext.value;
+    const rt   = +sliders.rent.value;
+    const disc = +sliders.disc.value / 100;
+    const ft   = rt * qt * 1000;
+    const V    = ft / disc;
+    const pbar = (V / s0) / 1000;
+    pin = { pbar, s0 };
+    $('pin-status').textContent = 'Pinned: p̄=' + fmt3(pbar) + '/m³ at S=' + s0 + ' km³. Now change Rₜ (e.g. Load Ex 5B) to see REVₜ.';
+    $('btn-unpin').style.display = 'inline-block';
+    run();
+  });
+
+  $('btn-unpin').addEventListener('click', () => {
+    pin = null;
+    $('pin-status').textContent = 'Not pinned — REVₜ = 0 (single-period snapshot). Pin, then move Rₜ, to see REVₜ reproduce Annex E Ex. 5\'s cross-period comparison.';
+    $('btn-unpin').style.display = 'none';
+    run();
+  });
+
+  Object.values(sliders).forEach(s => s.addEventListener('input', run));
+  run();
+</script>
+</body>
+</html>
