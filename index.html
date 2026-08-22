@@ -84,7 +84,7 @@
 <div class="page">
   <div class="header">
     <h1>SEEA CF 2028 — Water Valuation Simulator</h1>
-    <p>Interactive test engine for three recommendations in the proposed SEEA Central Framework update for water monetary asset accounts: Rec 2 (Valuation Targets — V, F<sub>t</sub>, D<sub>t</sub>), Rec 3 (MSUT and Asset Account Reconciliation), and Rec 8 (Valuation at the Extremes — the substitute ceiling).</p>
+    <p>This simulator tests three recommendations in the proposed SEEA Central Framework update for water monetary asset accounts. Adjust extraction and recharge to see the annual flow value F<sub>t</sub> and the depletion charge D<sub>t</sub> diverge (Rec 2 — Valuation Targets), watch OCV reconcile the two (Rec 3 — MSUT and Asset Account Reconciliation), and adjust the substitute ceiling to see when it caps D<sub>t</sub> as the stock nears exhaustion (Rec 8 — Valuation at the Extremes).</p>
   </div>
 
   <div class="grid">
@@ -160,6 +160,8 @@
     D<sub>t</sub> = p* × max(0, q<sub>t</sub> − g<sub>t</sub>) (depletion charge, eq. D.5 — Rec 2 names D<sub>t</sub> a valuation target) &nbsp;|&nbsp;
     Rec 8 (Valuation at the Extremes): D<sub>t</sub> capped at the substitute technology cost as the stock nears exhaustion &nbsp;|&nbsp;
     OCV = F<sub>t</sub> − q<sub>t</sub> × p* (Rec 3, MSUT / asset account reconciliation)
+    <br><br>
+    <strong>Notation:</strong> this tool uses the shadow price p* throughout, for simplicity. The guidance note’s eq. D.5 uses p̄, the operational proxy for p*, since p* is rarely estimated directly in practice (§3.5.1). Results here approximate what compilers would produce using p̄.
   </div>
 </div>
 
