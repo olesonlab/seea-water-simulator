@@ -125,7 +125,7 @@
           <label class="form-label">Opening stock S₀ (km³)</label>
           <span class="form-val" id="v-s0">500</span>
         </div>
-        <input type="range" id="sl-s0" min="10" max="600" value="500" step="5">
+        <input type="range" id="sl-s0" min="10" max="600" value="500" step="1">
       </div>
 
       <div class="form-group">
@@ -149,7 +149,7 @@
           <label class="form-label">Resource rent R<sub>t</sub> (Int$/m³)</label>
           <span class="form-val" id="v-rent">0.50</span>
         </div>
-        <input type="range" id="sl-rent" min="0.05" max="1.00" value="0.50" step="0.05">
+        <input type="range" id="sl-rent" min="0.05" max="3.00" value="0.50" step="0.05">
       </div>
 
       <div class="form-group">
@@ -165,13 +165,15 @@
           <label class="form-label">Substitute ceiling p<sub>substitute</sub> (Int$/m³) — Rec 8</label>
           <span class="form-val" id="v-sub">2.00</span>
         </div>
-        <input type="range" id="sl-sub" min="0.10" max="3.00" value="2.00" step="0.05">
+        <input type="range" id="sl-sub" min="0.10" max="5.00" value="2.00" step="0.05">
       </div>
 
       <div class="preset-row">
         <button class="preset-btn" data-preset="ex1">Load Ex 1</button>
         <button class="preset-btn" data-preset="ex2">Load Ex 2</button>
         <button class="preset-btn" data-preset="ex3">Load Ex 3</button>
+        <button class="preset-btn" data-preset="ex4a">Load Ex 4A</button>
+        <button class="preset-btn" data-preset="ex4b">Load Ex 4B</button>
         <button class="preset-btn" data-preset="ex5a">Load Ex 5A</button>
         <button class="preset-btn" data-preset="ex5b">Load Ex 5B</button>
         <button class="preset-btn" data-preset="ex6">Load Ex 6</button>
@@ -194,9 +196,10 @@
       </div>
 
       <div class="metric">
-        <div class="metric-label">Stock asset value V = F<sub>t</sub> / r (eq. D.3) — unit price p̄ = V/S₀ (eq. D.4)</div>
+        <div class="metric-label">Stock asset value V (eq. D.2) — unit price p̄ = V/S₀ (eq. D.4)</div>
         <div class="metric-value" id="out-v">$125,000M</div>
-        <div class="metric-label" style="margin-top:4px;">p̄ = <span id="out-pbar">$0.250</span>/m³</div>
+        <div class="metric-label" id="out-v-method" style="margin-top:4px;">perpetuity, V=F<sub>t</sub>/r (g<sub>t</sub>&gt;0, indefinite horizon)</div>
+        <div class="metric-label" style="margin-top:2px;">p̄ = <span id="out-pbar">$0.250</span>/m³</div>
       </div>
 
       <div class="metric">
@@ -221,8 +224,8 @@
 
   <div class="footnote">
     <strong>Key relationships:</strong>
-    F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (eq. D.2, MSUT flow value) &nbsp;|&nbsp;
-    V = F<sub>t</sub> / r (eq. D.3, perpetuity) &nbsp;|&nbsp;
+    F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (eq. D.1, MSUT flow value) &nbsp;|&nbsp;
+    V = F<sub>t</sub>/r if g<sub>t</sub>&gt;0 (perpetuity), or Σ<sub>t=1</sub><sup>T</sup> F<sub>t</sub>/(1+r)<sup>t</sup>, T=S₀/q<sub>t</sub>, if g<sub>t</sub>≤0 (eq. D.2; Annex A: no perpetuity for fossil aquifers) &nbsp;|&nbsp;
     p̄ = V / S₀ (eq. D.4, operational proxy for p*) &nbsp;|&nbsp;
     D<sub>t</sub> = min(p̄, p<sub>substitute</sub>) × max(0, q<sub>t</sub> − g<sub>t</sub>) (eq. D.5, Rec 8 cap) &nbsp;|&nbsp;
     Addition<sub>t</sub> = p̄ × max(0, g<sub>t</sub> − q<sub>t</sub>) (eq. D.6, Case 3) &nbsp;|&nbsp;
@@ -230,11 +233,11 @@
   </div>
 
   <div class="annexe-ref">
-    <div class="annexe-ref-title">Annex E worked examples — reproduced by the Load-Example buttons (Ex 4 is reference-only, see below)</div>
+    <div class="annexe-ref-title">Annex E worked examples — reproduced by the Load-Example buttons</div>
     <div class="annexe-item"><strong>Ex 1</strong> — Renewable aquifer, q<sub>t</sub>=10 &gt; g<sub>t</sub>=8 km³/yr: D<sub>t</sub>=Int$500M. The constant-rent perpetuity decouples p̄ from R<sub>t</sub>, so OCV<sub>t</sub>=+Int$2,500M even under over-extraction.</div>
-    <div class="annexe-item"><strong>Ex 2</strong> — Fossil aquifer, g<sub>t</sub>=0: all extraction depletes. D<sub>t</sub>=Int$5,000M exceeds F<sub>t</sub>=Int$4,000M — wealth falls faster than income is earned.</div>
+    <div class="annexe-item"><strong>Ex 2</strong> — Fossil aquifer, g<sub>t</sub>=0: valued on the finite horizon T=S₀/q<sub>t</sub>=20yr Annex A requires (not the perpetuity), so D<sub>t</sub>=Int$2,718M is <em>less</em> than F<sub>t</sub>=Int$4,000M — the mathematically expected result for any correctly valued fossil aquifer. The unsustainability signal is the finite horizon itself, not a D<sub>t</sub>-vs-F<sub>t</sub> comparison.</div>
     <div class="annexe-item"><strong>Ex 3</strong> — Over-extracted surface water: a smaller over-extraction volume than Ex 2, but a higher p̄=Int$2.25/m³, gives both a larger D<sub>t</sub> (Int$6,750M) and a larger OCV<sub>t</sub> gap.</div>
-    <div class="annexe-item"><strong>Ex 4</strong> — Near exhaustion (S=16 km³, ΔS/S=31%): uncapped D<sub>t</sub> would be Int$31,250M. Rec 8's substitute ceiling (p<sub>substitute</sub>=Int$2.00/m³) caps it at Int$10,000M. This example tracks a stock trajectory at fixed V rather than a single q<sub>t</sub>/g<sub>t</sub> period, so it isn't one of the Load-Example presets — but the substitute-ceiling slider above models the same cap mechanism; push q<sub>t</sub>−g<sub>t</sub> and R<sub>t</sub> up until p̄ exceeds p<sub>substitute</sub> to see it bind.</div>
+    <div class="annexe-item"><strong>Ex 4</strong> — A second, higher-rent fossil aquifer (R<sub>t</sub>=Int$2.50/m³) chosen so the substitute ceiling genuinely binds under correct finite-horizon math. Load Ex 4A (S=80 km³, year 4): p̄=Int$1.82/m³, below the Int$2.00/m³ ceiling. Load Ex 4B (S=16 km³, year 16.8, near exhaustion): p̄=Int$2.30/m³, uncapped D<sub>t</sub> would be Int$11,519M — Rec 8's substitute ceiling caps it at Int$10,000M.</div>
     <div class="annexe-item"><strong>Ex 5</strong> — OCV<sub>t</sub> decomposition: falls from +Int$2,500M (Scenario A, R<sub>t</sub>=0.50) to +Int$1,000M (Scenario B, R<sub>t</sub>=0.20) as R<sub>t</sub> drops, tracking the gap between current rent and the capitalized shadow price. Load Ex 5A, pin its p̄, then Load Ex 5B to see REV<sub>t</sub>=−Int$75,000M reproduce the doc's cross-scenario comparison.</div>
     <div class="annexe-item"><strong>Ex 6</strong> — q<sub>t</sub>=8 &lt; g<sub>t</sub>=10 km³/yr: the raw D<sub>t</sub> calculation is negative, floored to zero (Case 3). The addition instead raises NDP by Int$320M.</div>
   </div>
@@ -252,6 +255,29 @@
 
   let pin = null; // { pbar, s0 }
 
+  // ---- the doc's own valuation chain (eq. D.1-D.4) ----
+  // Ft: eq. D.1. V: eq. D.2 — renewable resources (gt>0) use the constant-rent
+  // perpetuity V=Ft/r; fossil / non-recharging resources (gt<=0) use the
+  // finite-horizon NPV Annex A requires instead (V=sum Ft/(1+r)^t, t=1..T,
+  // T=S0/qt), since the perpetuity formula is explicitly prohibited for those
+  // cases (it overstates V, and so overstates Dt). The closed-form annuity
+  // V = Ft*(1-(1+r)^-T)/r is algebraically identical to that finite sum for
+  // integer T and generalizes cleanly to the fractional T a mid-depletion
+  // stock (e.g. Annex E Ex. 4's S=16km3, T=3.2yr) produces.
+  function computeV(s0, qt, gt, rt, disc) {
+    const ft = rt * qt * 1000; // Int$M (eq. D.1)
+    let V, method;
+    if (gt <= 0 && qt > 0) {
+      const T = s0 / qt;
+      V = ft * (1 - Math.pow(1 + disc, -T)) / disc;
+      method = 'finite-horizon NPV, T=S₀/q<sub>t</sub>=' + T.toFixed(1) + 'yr (g<sub>t</sub>≤0; Annex A: no perpetuity for fossil aquifers)';
+    } else {
+      V = ft / disc;
+      method = 'perpetuity, V=F<sub>t</sub>/r (g<sub>t</sub>&gt;0, indefinite horizon)';
+    }
+    return { ft, V, method };
+  }
+
   function run() {
     const s0   = +sliders.s0.value;
     const qt   = +sliders.ext.value;
@@ -267,13 +293,12 @@
     $('v-disc').textContent = (disc * 100).toFixed(1);
     $('v-sub').textContent  = sub.toFixed(2);
 
-    // ---- the doc's own valuation chain (eq. D.2-D.4), reproduced exactly ----
-    const ft   = rt * qt * 1000;              // Int$M  (eq. D.2)
-    const V    = ft / disc;                    // Int$M  (eq. D.3, perpetuity)
+    const { ft, V, method } = computeV(s0, qt, gt, rt, disc);
     const pbar = (V / s0) / 1000;               // Int$/m3 (eq. D.4)
 
     $('out-ft').textContent   = fmtM(ft);
     $('out-v').textContent    = fmtM(V);
+    $('out-v-method').innerHTML = method;
     $('out-pbar').textContent = fmt3(pbar);
 
     // ---- Case 1/2/3 (§3.6.1), with a tolerance band on the qt/gt ratio when gt>0 ----
@@ -349,6 +374,8 @@
     ex1:     { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
     ex2:     { s0: 100, qt: 5,  gt: 0,  rt: 0.80, disc: 4, sub: 5.00 },
     ex3:     { s0: 50,  qt: 15, gt: 12, rt: 0.30, disc: 4, sub: 5.00 },
+    ex4a:    { s0: 80,  qt: 5,  gt: 0,  rt: 2.50, disc: 4, sub: 2.00 },
+    ex4b:    { s0: 16,  qt: 5,  gt: 0,  rt: 2.50, disc: 4, sub: 2.00 },
     ex5a:    { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
     ex5b:    { s0: 500, qt: 10, gt: 8,  rt: 0.20, disc: 4, sub: 5.00 },
     ex6:     { s0: 500, qt: 8,  gt: 10, rt: 0.40, disc: 4, sub: 5.00 },
@@ -362,10 +389,10 @@
   $('btn-pin').addEventListener('click', () => {
     const s0   = +sliders.s0.value;
     const qt   = +sliders.ext.value;
+    const gt   = +sliders.rec.value;
     const rt   = +sliders.rent.value;
     const disc = +sliders.disc.value / 100;
-    const ft   = rt * qt * 1000;
-    const V    = ft / disc;
+    const { V } = computeV(s0, qt, gt, rt, disc);
     const pbar = (V / s0) / 1000;
     pin = { pbar, s0 };
     $('pin-status').textContent = 'Pinned: p̄=' + fmt3(pbar) + '/m³ at S=' + s0 + ' km³. Now change Rₜ (e.g. Load Ex 5B) to see REVₜ.';
