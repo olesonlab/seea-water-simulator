@@ -1,414 +1,997 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SEEA CF 2028: Water Valuation Simulator</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      background: #f8fafc; color: #0f172a; padding: 32px 24px; min-height: 100vh;
-    }
-    .page { max-width: 980px; margin: 0 auto; }
-    .header { margin-bottom: 20px; }
-    .header h1 { font-size: 22px; font-weight: 600; color: #1e3a8a; margin-bottom: 6px; }
-    .header p { font-size: 14px; color: #64748b; line-height: 1.5; }
-    .panel {
-      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;
-    }
-    .panel-title {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #94a3b8; margin-bottom: 20px;
-    }
-    .rec-panel {
-      margin-bottom: 20px; padding: 16px 18px; background: #ffffff; border: 1px solid #e2e8f0;
-      border-radius: 12px;
-    }
-    .rec-panel-title {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #94a3b8; margin-bottom: 10px;
-    }
-    .rec-item { font-size: 13px; color: #334155; line-height: 1.55; margin-bottom: 8px; }
-    .rec-item:last-child { margin-bottom: 0; }
-    .rec-item strong { color: #1e3a8a; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-    @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
-    .form-group { margin-bottom: 18px; }
-    .form-group:last-child { margin-bottom: 0; }
-    .form-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-    .form-label { font-size: 13px; font-weight: 500; color: #334155; }
-    .form-val { font-size: 13px; font-weight: 600; color: #1e3a8a; font-variant-numeric: tabular-nums; }
-    input[type="range"] {
-      width: 100%; height: 4px; appearance: none; background: #e2e8f0;
-      border-radius: 2px; outline: none; cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      appearance: none; width: 16px; height: 16px; border-radius: 50%;
-      background: #1e3a8a; cursor: pointer;
-    }
-    input[type="range"].neg-ok::-webkit-slider-thumb { background: #7c3aed; }
-    .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
-    .preset-btn {
-      font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff6ff;
-      border: 1px solid #bfdbfe; border-radius: 6px; padding: 5px 9px; cursor: pointer;
-    }
-    .preset-btn:hover { background: #dbeafe; }
-    .preset-btn.drought { color: #7c2d12; background: #fff7ed; border-color: #fed7aa; }
-    .preset-btn.drought:hover { background: #ffedd5; }
-    .pin-row { margin-top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .pin-btn {
-      font-size: 11px; font-weight: 600; color: #166534; background: #f0fdf4;
-      border: 1px solid #bbf7d0; border-radius: 6px; padding: 5px 9px; cursor: pointer;
-    }
-    .pin-btn:hover { background: #dcfce7; }
-    .pin-status { font-size: 11px; color: #64748b; }
-    .metric {
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-      padding: 12px 14px; margin-bottom: 10px;
-    }
-    .metric:last-of-type { margin-bottom: 0; }
-    .metric-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
-    .metric-value { font-size: 20px; font-weight: 600; color: #0f172a; }
-    .badge {
-      display: inline-block; font-size: 11px; font-weight: 600;
-      padding: 3px 9px; border-radius: 5px; margin-top: 7px;
-    }
-    .badge-warn { background: #fee2e2; color: #991b1b; }
-    .badge-ok { background: #dcfce7; color: #166534; }
-    .badge-neutral { background: #f1f5f9; color: #475569; }
-    .badge-addition { background: #dbeafe; color: #1e40af; }
-    .ocv-metric { border-left: 3px solid #cbd5e1; }
-    .advisory {
-      margin-top: 10px; padding: 10px 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.5;
-    }
-    .advisory-drought { background: #fff7ed; border: 1px solid #fed7aa; color: #7c2d12; }
-    .advisory-validity { background: #fefce8; border: 1px solid #fde68a; color: #713f12; }
-    .footnote {
-      margin-top: 0; padding: 14px 16px; background: #eff6ff;
-      border-radius: 8px; font-size: 12px; color: #1e40af; line-height: 1.6; margin-bottom: 20px;
-    }
-    .footnote strong { font-weight: 600; }
-    .annexe-ref {
-      padding: 14px 16px; background: #f8fafc; border: 1px solid #e2e8f0;
-      border-radius: 8px; font-size: 12px; color: #334155; line-height: 1.6;
-    }
-    .annexe-ref-title {
-      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-      color: #94a3b8; margin-bottom: 8px;
-    }
-    .annexe-item { margin-bottom: 6px; }
-    .annexe-item:last-child { margin-bottom: 0; }
-    .annexe-item strong { color: #1e3a8a; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Interactive companion to SEEA CF 2028 Guidance Note D.7, Valuation of Water Resources: the eight recommendations, the twelve open questions, the AN.34 scope test, the valuation method hierarchy, and the asset account and Annex D valuation chain running live.">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>GN D.7 Review Companion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#F5F7F5; --surface:#FFFFFF; --surface-2:#EBF0EC;
+  --ink:#131C1A; --ink-2:#3F514D; --ink-3:#6E807B;
+  --rule:#D7E0DA; --rule-2:#B7C6BF;
+  --teal:#0E5C55; --teal-ink:#0E5C55; --teal-soft:#DDEDE9;
+  --ochre:#8A5B0F; --ochre-soft:#F4E9D4;
+  --plum:#7A2E52; --plum-soft:#F3E3EB;
+  --rust:#9A3B1F; --rust-soft:#F6E2DB;
+  --shadow:0 1px 2px rgba(19,28,26,.05), 0 6px 18px -12px rgba(19,28,26,.28);
+  --serif:"Fraunces", Georgia, "Times New Roman", serif;
+  --sans:"Libre Franklin", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C1312; --surface:#141D1B; --surface-2:#1C2725;
+    --ink:#E9EFEB; --ink-2:#AEBFB9; --ink-3:#7D918B;
+    --rule:#26332F; --rule-2:#3B4B46;
+    --teal:#5FD3C2; --teal-ink:#7FE0D1; --teal-soft:#12332F;
+    --ochre:#DFAE60; --ochre-soft:#33280F;
+    --plum:#E49CBE; --plum-soft:#341A26;
+    --rust:#E39070; --rust-soft:#331A11;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -12px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C1312; --surface:#141D1B; --surface-2:#1C2725;
+  --ink:#E9EFEB; --ink-2:#AEBFB9; --ink-3:#7D918B;
+  --rule:#26332F; --rule-2:#3B4B46;
+  --teal:#5FD3C2; --teal-ink:#7FE0D1; --teal-soft:#12332F;
+  --ochre:#DFAE60; --ochre-soft:#33280F;
+  --plum:#E49CBE; --plum-soft:#341A26;
+  --rust:#E39070; --rust-soft:#331A11;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -12px rgba(0,0,0,.7);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:600; line-height:1.18; text-wrap:balance; margin:0;}
+p{margin:0;}
+a{color:var(--teal-ink);}
+button{font:inherit; color:inherit;}
+:focus-visible{outline:2px solid var(--teal); outline-offset:2px; border-radius:3px;}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important;}}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1220px; margin:0 auto; padding:0 22px 72px;}
+.masthead{
+  display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+  gap:18px; padding:34px 0 20px; border-bottom:1px solid var(--rule-2);
+}
+.masthead h1{font-size:clamp(26px,3.4vw,38px); letter-spacing:-.015em;}
+.masthead .issue{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--teal-ink); margin-bottom:8px;
+}
+.masthead .sub{color:var(--ink-2); font-size:14px; max-width:62ch; margin-top:9px;}
+.stamp{
+  font-family:var(--mono); font-size:11px; color:var(--ink-3); text-align:right; line-height:1.7;
+}
+.stamp b{color:var(--ink-2); font-weight:500;}
+
+.layout{display:grid; grid-template-columns:214px minmax(0,1fr); gap:38px; margin-top:26px;}
+@media (max-width:900px){ .layout{grid-template-columns:1fr; gap:20px;} }
+
+nav.rail{position:sticky; top:16px; align-self:start;}
+@media (max-width:900px){
+  nav.rail{position:static; overflow-x:auto; padding-bottom:4px;}
+  nav.rail ol{display:flex; gap:6px;}
+  nav.rail li{flex:0 0 auto;}
+}
+nav.rail ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+@media (max-width:900px){ nav.rail ol{flex-direction:row;} }
+.railbtn{
+  width:100%; text-align:left; background:none; border:0; cursor:pointer;
+  padding:8px 11px; border-radius:6px; color:var(--ink-2); font-size:13.5px;
+  display:flex; gap:9px; align-items:baseline; white-space:nowrap;
+}
+.railbtn .num{font-family:var(--mono); font-size:10.5px; color:var(--ink-3);}
+.railbtn:hover{background:var(--surface-2); color:var(--ink);}
+.railbtn[aria-current="true"]{background:var(--teal-soft); color:var(--teal-ink); font-weight:600;}
+.railbtn[aria-current="true"] .num{color:var(--teal-ink);}
+
+.panel[hidden]{display:none!important;}
+.panel-head{margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--rule);}
+.panel-head h2{font-size:23px; letter-spacing:-.01em;}
+.panel-head p{color:var(--ink-2); font-size:14px; max-width:68ch; margin-top:7px;}
+
+/* ---------- shared bits ---------- */
+.ref{
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  background:var(--surface-2); border-radius:3px; padding:1px 5px; white-space:nowrap;
+}
+.tag{
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  padding:2.5px 7px; border-radius:3px; font-weight:600; white-space:nowrap;
+}
+.tag.gc{background:var(--ochre-soft); color:var(--ochre);}
+.tag.tc{background:var(--plum-soft); color:var(--plum);}
+.tag.prio{background:var(--teal-soft); color:var(--teal-ink);}
+.tag.t1{background:var(--teal-soft); color:var(--teal-ink);}
+.tag.t2{background:var(--surface-2); color:var(--ink-2);}
+.tag.no{background:var(--rust-soft); color:var(--rust);}
+.eyebrow{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--ink-3); margin-bottom:10px;
+}
+
+/* ---------- overview ---------- */
+.tally{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:9px; overflow:hidden; margin-bottom:26px;}
+.tally div{background:var(--surface); padding:15px 16px; display:flex; flex-direction:column; gap:4px;}
+.tally .n{font-family:var(--serif); font-size:31px; font-weight:600; line-height:1.05; letter-spacing:-.02em;}
+.tally .k{font-size:12.5px; color:var(--ink-2);}
+.tally .r1 .n{color:var(--teal-ink);} .tally .r2 .n{color:var(--ochre);} .tally .r3 .n{color:var(--plum);}
+
+.prose{max-width:68ch; display:flex; flex-direction:column; gap:14px; font-size:15px; color:var(--ink-2);}
+.prose strong{color:var(--ink); font-weight:600;}
+.pull{
+  border-left:2px solid var(--teal); padding:2px 0 2px 16px; color:var(--ink);
+  font-family:var(--serif); font-size:17.5px; line-height:1.45;
+}
+.priority{list-style:none; margin:22px 0 0; padding:0; display:flex; flex-direction:column; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:9px; overflow:hidden;}
+.priority li{background:var(--surface); padding:14px 17px; display:flex; gap:14px; align-items:flex-start;}
+.priority .lbl{font-family:var(--mono); font-size:11px; color:var(--teal-ink); flex:0 0 96px; padding-top:3px; white-space:nowrap;}
+.priority .txt{font-size:14px; color:var(--ink-2);}
+.priority .txt b{color:var(--ink); font-weight:600;}
+
+/* ---------- recommendations ---------- */
+.filters{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:20px; align-items:center;}
+.chip{
+  border:1px solid var(--rule-2); background:var(--surface); border-radius:20px;
+  padding:5px 13px; font-size:12.5px; cursor:pointer; color:var(--ink-2);
+}
+.chip:hover{border-color:var(--teal); color:var(--ink);}
+.chip[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:var(--paper); font-weight:600;}
+:root[data-theme="dark"] .chip[aria-pressed="true"], :root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#0C1312;}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) .chip[aria-pressed="true"]{color:#FFFFFF;} }
+
+.recs{display:flex; flex-direction:column; gap:12px;}
+.rec{
+  background:var(--surface); border:1px solid var(--rule); border-radius:10px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.rec[data-prio="1"]{border-left:3px solid var(--teal);}
+.rec > summary{
+  list-style:none; cursor:pointer; padding:15px 18px;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:14px; align-items:baseline;
+}
+.rec > summary::-webkit-details-marker{display:none;}
+.rec > summary:hover{background:var(--surface-2);}
+.rec .rn{font-family:var(--mono); font-size:12px; color:var(--teal-ink); font-weight:600;}
+.rec .rt{font-family:var(--serif); font-size:17px; font-weight:600;}
+.rec .rmeta{font-size:12.5px; color:var(--ink-3); margin-top:3px;}
+.rec .rtags{display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end;}
+.rec .body{padding:2px 18px 18px; border-top:1px solid var(--rule); margin-top:2px;}
+.rec .gist{font-size:14.5px; color:var(--ink-2); margin:14px 0 16px; max-width:70ch;}
+.kv{display:grid; grid-template-columns:auto minmax(0,1fr); gap:7px 16px; font-size:13px; align-items:baseline;}
+.kv dt{font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); padding-top:2px;}
+.kv dd{margin:0; color:var(--ink-2);}
+.linkrow{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;}
+.qlink{
+  border:1px solid var(--rule-2); background:var(--surface); border-radius:5px;
+  padding:4px 10px; font-size:12px; cursor:pointer; color:var(--ink-2); font-family:var(--mono);
+}
+.qlink:hover{border-color:var(--teal); color:var(--teal-ink);}
+.qlink.tc{border-color:var(--plum-soft); color:var(--plum);}
+.qlink.gc{border-color:var(--ochre-soft); color:var(--ochre);}
+.qlink.demo{border-color:var(--teal-soft); color:var(--teal-ink);}
+
+/* ---------- questions ---------- */
+.qgrid{display:flex; flex-direction:column; gap:11px;}
+.q{
+  background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:16px 18px;
+  box-shadow:var(--shadow);
+}
+.q.gc{border-left:3px solid var(--ochre);}
+.q.tc{border-left:3px solid var(--plum);}
+.q .qhead{display:flex; gap:11px; align-items:baseline; flex-wrap:wrap; margin-bottom:9px;}
+.q .qid{font-family:var(--mono); font-size:12.5px; font-weight:600;}
+.q.gc .qid{color:var(--ochre);} .q.tc .qid{color:var(--plum);}
+.q .qtitle{font-family:var(--serif); font-size:16px; font-weight:600; flex:1 1 240px;}
+.q .qtext{font-size:14px; color:var(--ink-2); max-width:74ch;}
+.q .qfoot{margin-top:11px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--ink-3);}
+.q .ask{font-size:13px; color:var(--ink); background:var(--surface-2); border-radius:6px; padding:9px 12px; margin-top:11px;}
+.q .ask b{font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); display:block; margin-bottom:3px; font-weight:600;}
+.q:target, .q.flash{outline:2px solid var(--teal); outline-offset:3px;}
+
+/* ---------- condition tools ---------- */
+.tool{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start;}
+@media (max-width:820px){ .tool{grid-template-columns:1fr;} }
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:18px; box-shadow:var(--shadow);}
+.card h3{font-size:15px; margin-bottom:4px;}
+.card .hint{font-size:12.5px; color:var(--ink-3); margin-bottom:15px;}
+.cond{display:flex; flex-direction:column; gap:2px;}
+.cond label{
+  display:flex; gap:11px; align-items:flex-start; padding:10px 11px; border-radius:7px; cursor:pointer;
+  border:1px solid transparent;
+}
+.cond label:hover{background:var(--surface-2);}
+.cond input{margin:3px 0 0; accent-color:var(--teal); width:15px; height:15px; flex:0 0 auto;}
+.cond label > span:last-child{display:flex; flex-direction:column; gap:3px; min-width:0;}
+.cond .ct{display:block; font-size:13.5px; color:var(--ink);}
+.cond .cs{display:block; font-size:12px; color:var(--ink-3);}
+.cond label:has(input:checked){background:var(--teal-soft); border-color:var(--teal);}
+
+.verdict{border-radius:9px; padding:15px 16px; margin-bottom:13px;}
+.verdict.in{background:var(--teal-soft); border:1px solid var(--teal);}
+.verdict.out{background:var(--rust-soft); border:1px solid var(--rust);}
+.verdict.part{background:var(--ochre-soft); border:1px solid var(--ochre);}
+.verdict .vl{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; color:var(--ink-2);}
+.verdict .vv{font-family:var(--serif); font-size:19px; font-weight:600;}
+.verdict.in .vv{color:var(--teal-ink);} .verdict.out .vv{color:var(--rust);} .verdict.part .vv{color:var(--ochre);}
+.verdict .vw{font-size:13px; color:var(--ink-2); margin-top:7px;}
+
+.opts{display:flex; flex-direction:column; gap:8px;}
+.opt{border:1px solid var(--rule); border-radius:8px; padding:11px 13px; background:var(--surface);}
+.opt.on{border-color:var(--teal); background:var(--teal-soft);}
+.opt.best{border-width:2px;}
+.opt.dead{opacity:.5;}
+.opt .oh{display:flex; gap:9px; align-items:baseline; justify-content:space-between;}
+.opt .on-name{font-size:14px; font-weight:600;}
+.opt .od{font-size:12.5px; color:var(--ink-2); margin-top:5px;}
+.opt .ov{font-size:12px; color:var(--ink-3); margin-top:6px; font-family:var(--mono);}
+
+.presets{display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; padding-top:14px; border-top:1px solid var(--rule);}
+.pbtn{border:1px solid var(--rule-2); background:var(--surface); border-radius:5px; padding:4.5px 10px; font-size:12px; cursor:pointer; color:var(--ink-2);}
+.pbtn:hover{border-color:var(--teal); color:var(--teal-ink);}
+
+/* ---------- account + simulator ---------- */
+.simgrid{display:grid; grid-template-columns:minmax(0,340px) minmax(0,1fr); gap:20px; align-items:start;}
+@media (max-width:880px){ .simgrid{grid-template-columns:1fr;} }
+.fg{margin-bottom:16px;}
+.fg:last-child{margin-bottom:0;}
+.fr{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; gap:10px;}
+.fl{font-size:13px; color:var(--ink-2);}
+.fv{font-family:var(--mono); font-size:13px; font-weight:600; color:var(--teal-ink); font-variant-numeric:tabular-nums;}
+input[type="range"]{
+  width:100%; height:3px; appearance:none; -webkit-appearance:none; background:var(--rule-2);
+  border-radius:2px; outline:none; cursor:pointer;
+}
+input[type="range"]::-webkit-slider-thumb{appearance:none; -webkit-appearance:none; width:15px; height:15px; border-radius:50%; background:var(--teal); cursor:pointer;}
+input[type="range"]::-moz-range-thumb{width:15px; height:15px; border:0; border-radius:50%; background:var(--teal); cursor:pointer;}
+
+.acct{width:100%; border-collapse:collapse; font-size:13px;}
+.acct th,.acct td{padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); vertical-align:top;}
+.acct th{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-weight:600;}
+.acct td.f{font-family:var(--mono); font-size:12px; color:var(--ink-3); white-space:nowrap;}
+.acct td.v{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; font-weight:500;}
+.acct tr.grp td{background:var(--surface-2); font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);}
+.acct tr.tot td{border-top:2px solid var(--rule-2); border-bottom:0; font-weight:600;}
+.acct tr.tot td.v{color:var(--teal-ink);}
+.acct tr.zero td.v{color:var(--ink-3);}
+.scroller{overflow-x:auto;}
+
+.metric{border:1px solid var(--rule); border-radius:8px; padding:11px 13px; background:var(--surface);}
+.metric .ml{font-size:11.5px; color:var(--ink-3);}
+.metric .mv{font-family:var(--serif); font-size:22px; font-weight:600; margin-top:3px; letter-spacing:-.01em; font-variant-numeric:tabular-nums;}
+.metrics{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-bottom:14px;}
+.note{font-size:12.5px; border-radius:7px; padding:10px 12px; margin-top:10px;}
+.note.warn{background:var(--rust-soft); color:var(--rust);}
+.note.info{background:var(--ochre-soft); color:var(--ochre);}
+.note.ok{background:var(--teal-soft); color:var(--teal-ink);}
+.eqs{margin-top:16px; padding-top:14px; border-top:1px solid var(--rule); font-family:var(--mono); font-size:11.5px; color:var(--ink-3); line-height:2;}
+.eqs b{color:var(--ink-2); font-weight:500;}
+
+footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--rule); font-size:12.5px; color:var(--ink-3); max-width:76ch;}
+footer p+p{margin-top:7px;}
+</style>
+
 </head>
 <body>
-<div class="page">
-  <div class="header">
-    <h1>SEEA CF 2028 — Water Valuation Simulator</h1>
-    <p>Runs the guidance note's own valuation chain — F<sub>t</sub> → V → p̄ → D<sub>t</sub> — so the Load-Example buttons below reproduce Annex E's numbers exactly, not just approximately.</p>
+<div class="wrap">
+
+<header class="masthead">
+  <div>
+    <div class="issue">SEEA CF 2028 &middot; Guidance Note Issue D.7</div>
+    <h1>Valuation of Water Resources</h1>
+    <p class="sub">A working companion to the guidance note for Technical Committee members and expert reviewers. The eight recommendations, the twelve open questions, and the three mechanisms that are hardest to check on paper, arranged so you can see what is being asked of you.</p>
+  </div>
+  <div class="stamp">
+    Draft <b>v4.97.0</b><br>
+    Nothing here is settled<br>
+    Every entry is a proposal
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="rail" aria-label="Sections">
+  <ol>
+    <li><button class="railbtn" data-go="overview" aria-current="true"><span class="num">00</span>What is decided here</button></li>
+    <li><button class="railbtn" data-go="recs"><span class="num">01</span>Recommendations</button></li>
+    <li><button class="railbtn" data-go="questions"><span class="num">02</span>Open questions</button></li>
+    <li><button class="railbtn" data-go="scope"><span class="num">03</span>Scope test</button></li>
+    <li><button class="railbtn" data-go="methods"><span class="num">04</span>Method hierarchy</button></li>
+    <li><button class="railbtn" data-go="account"><span class="num">05</span>AN.34 account</button></li>
+    <li><button class="railbtn" data-go="sim"><span class="num">06</span>Valuation chain</button></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ===================== OVERVIEW ===================== -->
+<section class="panel" id="p-overview">
+  <div class="panel-head">
+    <h2>What the Technical Committee is being asked to decide</h2>
+    <p>The note proposes a method for valuing water resources under the SEEA Central Framework. It is written for the committee and reviewers deciding whether this becomes part of the international standard, and for statistical offices weighing what adopting it would cost them.</p>
   </div>
 
-  <div class="rec-panel">
-    <div class="rec-panel-title">What the three recommendations say</div>
-    <div class="rec-item"><strong>Rec 2 — Valuation Targets:</strong> distinguish three separate valuation targets for water — stock value V (balance sheet), flow value F<sub>t</sub> (MSUT), and depletion value D<sub>t</sub> (NDP/NNI) — and specify which one each accounting purpose requires.</div>
-    <div class="rec-item"><strong>Rec 3 — MSUT and Asset Account Reconciliation:</strong> compile the monetary supply-use table and the water asset account jointly. MSUT values extraction at the resource rent F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub>; the asset account values it at q<sub>t</sub> × p̄. Report the gap between them as OCV, with a narrative explanation.</div>
-    <div class="rec-item"><strong>Rec 8 — Valuation at the Extremes:</strong> as a resource nears exhaustion, cap the depletion charge at the unit cost of the cheapest accessible substitute technology — no rational user would keep paying more than that to extract.</div>
+  <div class="tally">
+    <div class="r1"><div class="n">8</div><div class="k">recommendations, <span class="ref">&sect;4</span></div></div>
+    <div class="r2"><div class="n">6</div><div class="k">questions for global consultation, <span class="ref">&sect;5.3</span></div></div>
+    <div class="r3"><div class="n">6</div><div class="k">questions reserved for TC guidance, <span class="ref">&sect;5.4</span></div></div>
+    <div><div class="n">8</div><div class="k">methodological gaps before 2028, <span class="ref">&sect;5.5</span></div></div>
   </div>
 
-  <div class="grid">
-    <div class="panel">
-      <p class="panel-title">Simulation parameters</p>
+  <div class="prose">
+    <p class="pull">A handful of countries already compile some form of water account. Their methods differ enough that stock and flow estimates are not comparable across borders. No operational guidance currently resolves that.</p>
+    <p><strong>Water accounts have uses well beyond national accounts integration.</strong> A river-basin-level monetary account tells a water ministry where scarcity is concentrated and what a drought would cost. It gives a finance ministry a basis for pricing reform and for weighing infrastructure against other capital spending. Valuing water depletion the way minerals and timber already are is one application of this work, not the reason for it. SNA 2025 <span class="ref">para. 35.50</span> delegates natural resource depletion valuation to the SEEA CF update process, and water is the category that delegation left most unresolved.</p>
+    <p><strong>Three principles carry through every recommendation.</strong> Water is valued as a resource, not a service: the aquifer or river is what gets valued, not a utility's revenue. Valuation is scarcity-driven, so the same cubic metre is worth more in a stressed basin than an abundant one. And scope follows use, not physical form, which is what the scope test in section 03 encodes.</p>
+  </div>
 
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Opening stock S₀ (km³)</label>
-          <span class="form-val" id="v-s0">500</span>
-        </div>
-        <input type="range" id="sl-s0" min="10" max="600" value="500" step="1">
+  <div class="eyebrow" style="margin-top:30px;">Where reviewer input shapes the outcome most</div>
+  <ul class="priority">
+    <li><span class="lbl">Rec 1 &middot; TC 5</span><span class="txt"><b>A scope test for what counts as a water resource.</b> The committee is asked directly whether that test holds up against the SNA economic-asset criteria in practice, or needs further guidance.</span></li>
+    <li><span class="lbl">Rec 4, 5</span><span class="txt"><b>A tiered valuation method.</b> Market prices where observed, cost or productivity estimation where they are not, so a country with limited data has a defensible place to start rather than an all-or-nothing standard.</span></li>
+    <li><span class="lbl">Rec 6</span><span class="txt"><b>River-basin compilation rather than national averages.</b> A single national figure hides exactly the scarcity variation the account exists to capture.</span></li>
+    <li><span class="lbl">Rec 7 &middot; TC 4</span><span class="txt"><b>Water quality as a separate, documented adjustment to value</b>, not folded silently into volume. The committee is asked whether this should be a distinct degradation cost at all.</span></li>
+  </ul>
+</section>
+
+<!-- ===================== RECOMMENDATIONS ===================== -->
+<section class="panel" id="p-recs" hidden>
+  <div class="panel-head">
+    <h2>The eight recommendations</h2>
+    <p>Where consensus exists these are stated as recommendations. Where committee direction is still needed they are proposals for consideration. Nothing is final until after global consultation.</p>
+  </div>
+  <div class="filters">
+    <button class="chip" data-f="all" aria-pressed="true">All eight</button>
+    <button class="chip" data-f="prio" aria-pressed="false">Reviewer priority</button>
+    <button class="chip" data-f="open" aria-pressed="false">Carries an open question</button>
+    <button class="chip" data-f="demo" aria-pressed="false">Has a working demo here</button>
+  </div>
+  <div class="recs" id="recs"></div>
+</section>
+
+<!-- ===================== QUESTIONS ===================== -->
+<section class="panel" id="p-questions" hidden>
+  <div class="panel-head">
+    <h2>Twelve open questions, two different asks</h2>
+    <p>Six go to countries in the formal global consultation period. Six are reserved for the Technical Committee and are addressed to it directly, outside the consultation. The two are answered by different people and should not be read as one list.</p>
+  </div>
+  <div class="filters">
+    <button class="chip" data-qf="all" aria-pressed="true">All twelve</button>
+    <button class="chip" data-qf="gc" aria-pressed="false">Global consultation (6)</button>
+    <button class="chip" data-qf="tc" aria-pressed="false">Technical Committee (6)</button>
+  </div>
+  <div class="qgrid" id="qgrid"></div>
+</section>
+
+<!-- ===================== SCOPE ===================== -->
+<section class="panel" id="p-scope" hidden>
+  <div class="panel-head">
+    <h2>The AN.34 scope test</h2>
+    <p>Recommendation 1 replaces a physical-form boundary with a three-part test on the use. All three conditions must hold. The examples below are the cases the note works through by name.</p>
+  </div>
+  <div class="tool">
+    <div class="card">
+      <h3>Conditions</h3>
+      <p class="hint">Set the three conditions for the use you are checking.</p>
+      <div class="cond" id="scope-cond">
+        <label><input type="checkbox" id="sc1" checked><span><span class="ct">An enforceable use right exists</span><span class="cs">Set by the domestic water-rights regime, which varies by jurisdiction and sometimes within one <span class="ref">&sect;2.1</span></span></span></label>
+        <label><input type="checkbox" id="sc2" checked><span><span class="ct">The use generates SNA-recorded output or measurable access expenditure</span><span class="cs">Not physical consumption. Non-extractive does not mean non-consumptive.</span></span></label>
+        <label><input type="checkbox" id="sc3" checked><span><span class="ct">The use is recorded, or recordable, as a water use in the water PSUT</span><span class="cs">Physical accounts record all water bodies regardless of this test <span class="ref">&sect;3.2.1</span></span></span></label>
       </div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Extraction q<sub>t</sub> (km³/yr)</label>
-          <span class="form-val" id="v-ext">10</span>
-        </div>
-        <input type="range" id="sl-ext" min="0" max="25" value="10" step="0.5">
-      </div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Net natural recharge g<sub>t</sub> (km³/yr)</label>
-          <span class="form-val" id="v-rec">8</span>
-        </div>
-        <input type="range" class="neg-ok" id="sl-rec" min="-5" max="15" value="8" step="0.5">
-      </div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Resource rent R<sub>t</sub> (Int$/m³)</label>
-          <span class="form-val" id="v-rent">0.50</span>
-        </div>
-        <input type="range" id="sl-rent" min="0.05" max="3.00" value="0.50" step="0.05">
-      </div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Discount rate r (%)</label>
-          <span class="form-val" id="v-disc">4.0</span>
-        </div>
-        <input type="range" id="sl-disc" min="1" max="8" value="4" step="0.5">
-      </div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <label class="form-label">Substitute ceiling p<sub>substitute</sub> (Int$/m³) — Rec 8</label>
-          <span class="form-val" id="v-sub">2.00</span>
-        </div>
-        <input type="range" id="sl-sub" min="0.10" max="5.00" value="2.00" step="0.05">
-      </div>
-
-      <div class="preset-row">
-        <button class="preset-btn" data-preset="ex1">Load Ex 1</button>
-        <button class="preset-btn" data-preset="ex2">Load Ex 2</button>
-        <button class="preset-btn" data-preset="ex3">Load Ex 3</button>
-        <button class="preset-btn" data-preset="ex4a">Load Ex 4A</button>
-        <button class="preset-btn" data-preset="ex4b">Load Ex 4B</button>
-        <button class="preset-btn" data-preset="ex5a">Load Ex 5A</button>
-        <button class="preset-btn" data-preset="ex5b">Load Ex 5B</button>
-        <button class="preset-btn" data-preset="ex6">Load Ex 6</button>
-        <button class="preset-btn drought" data-preset="drought">Drought demo (g<sub>t</sub>&lt;0)</button>
-      </div>
-
-      <div class="pin-row">
-        <button class="pin-btn" id="btn-pin">📌 Pin current p̄ as opening price</button>
-        <button class="pin-btn" id="btn-unpin" style="display:none; color:#991b1b; background:#fef2f2; border-color:#fecaca;">✕ Clear pin</button>
-        <span class="pin-status" id="pin-status">Not pinned — REV<sub>t</sub> = 0 (single-period snapshot). Pin, then move R<sub>t</sub>, to see REV<sub>t</sub> reproduce Annex E Ex. 5's cross-period comparison.</span>
+      <div class="presets" id="scope-presets"></div>
+    </div>
+    <div class="card">
+      <h3>Treatment</h3>
+      <p class="hint">Where the use is recorded, and under which framework.</p>
+      <div id="scope-out"></div>
+      <div class="eyebrow" style="margin-top:20px;">The four accounting boundaries <span class="ref">&sect;5.1</span></div>
+      <div class="opts">
+        <div class="opt"><div class="oh"><span class="on-name">Boundary 1 &middot; SNA production boundary</span><span class="tag t1">AN.34</span></div><div class="od">Water entering productive processes that contribute to SNA-recorded output, including own-account abstraction. Foundation for resource rent, depletion, and the asset account.</div></div>
+        <div class="opt"><div class="oh"><span class="on-name">Boundary 2 &middot; Non-market services</span><span class="tag t2">CAN tables</span></div><div class="od">Unpaid recreational access, and productive uses such as industrial cooling not captured under Boundary 1. Supplementary accounts.</div></div>
+        <div class="opt"><div class="oh"><span class="on-name">Boundary 3 &middot; Spiritual and non-use</span><span class="tag t2">SEEA EA</span></div><div class="od">Cultural, spiritual, existence and bequest values. Not recordable in AN.34. Aligned with SEEA EA cultural services accounts.</div></div>
+        <div class="opt"><div class="oh"><span class="on-name">Boundary 4 &middot; Physical flows only</span><span class="tag t2">PSUT</span></div><div class="od">Environmental water allocations, ecological base flows, and other PSUT flows with no abstraction right or market use. No monetary entry. Reconcile the PSUT before any monetary layer.</div></div>
       </div>
     </div>
+  </div>
+</section>
 
-    <div class="panel">
-      <p class="panel-title">Accounting metrics</p>
-
-      <div class="metric">
-        <div class="metric-label">Annual flow value F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> — MSUT (Rec 2)</div>
-        <div class="metric-value" id="out-ft">$5,000M</div>
+<!-- ===================== METHODS ===================== -->
+<section class="panel" id="p-methods" hidden>
+  <div class="panel-head">
+    <h2>Which valuation method a compiler may use</h2>
+    <p>Two tiers ordered by proximity to an observed exchange price, with a conditional sub-tier inside Tier 2. Set the data conditions on the left and the hierarchy resolves. Compilers apply the highest tier whose conditions are satisfied.</p>
+  </div>
+  <div class="tool">
+    <div class="card">
+      <h3>Data conditions</h3>
+      <p class="hint">Check every condition that holds for the resource being valued.</p>
+      <div class="cond" id="m-cond">
+        <label><input type="checkbox" id="mA"><span><span class="ct">Competitive market, arm's-length transactions, prices spatially matched</span><span class="cs">No regulatory caps below resource rent <span class="ref">&sect;3.4.2</span></span></span></label>
+        <label><input type="checkbox" id="mB" checked><span><span class="ct">Physical scarcity established, with audited cost data for a credible alternative supply</span><span class="cs">Only where the alternative would genuinely be implemented <span class="ref">&sect;3.4.3</span></span></span></label>
+        <label><input type="checkbox" id="mC" checked><span><span class="ct">Water is demonstrably the binding constraint on output</span><span class="cs">With factor payment data, or enough observations for a production function <span class="ref">&sect;3.4.4</span></span></span></label>
+        <label><input type="checkbox" id="mD"><span><span class="ct">Competitive property or water-rights market, rights separately identifiable</span><span class="cs">Sufficient transaction volume to identify the water coefficient <span class="ref">&sect;3.4.5</span></span></span></label>
+        <label><input type="checkbox" id="mF"><span><span class="ct">Productive use with SNA-recorded output, priced from observed access expenditure</span><span class="cs">No elasticity estimate required to produce the result <span class="ref">&sect;3.4.7</span></span></span></label>
+        <label><input type="checkbox" id="mE"><span><span class="ct">A documented Tier 1 or Tier 2 source study and a transfer function are available</span><span class="cs">Interim measure only, where primary estimation is infeasible <span class="ref">&sect;3.4.6</span></span></span></label>
       </div>
+      <div class="presets" id="m-presets"></div>
+    </div>
+    <div class="card">
+      <h3>Eligible options</h3>
+      <p class="hint">Highest eligible tier first. Verification requirements shown per option.</p>
+      <div id="m-out"></div>
+      <div class="note warn" style="margin-top:14px;"><strong>Ineligible at any tier.</strong> Stated preference methods, and travel cost applications that integrate a demand curve to report consumer surplus. These measure total economic value including surplus, which has no counterpart in SNA-recorded transactions. This is a property of how travel cost is used, not of the method <span class="ref">&sect;3.4.8</span></div>
+    </div>
+  </div>
+</section>
 
-      <div class="metric">
-        <div class="metric-label">Stock asset value V (eq. D.2) — unit price p̄ = V/S₀ (eq. D.4)</div>
-        <div class="metric-value" id="out-v">$125,000M</div>
-        <div class="metric-label" id="out-v-method" style="margin-top:4px;">perpetuity, V=F<sub>t</sub>/r (g<sub>t</sub>&gt;0, indefinite horizon)</div>
-        <div class="metric-label" style="margin-top:2px;">p̄ = <span id="out-pbar">$0.250</span>/m³</div>
+<!-- ===================== ACCOUNT ===================== -->
+<section class="panel" id="p-account" hidden>
+  <div class="panel-head">
+    <h2>The monetary asset account, filled in</h2>
+    <p>Table 3.4 as it balances for the parameters set in section 06. Depletion and the under-extraction addition are mutually exclusive within a period for a given resource type, so one of those two lines is always zero.</p>
+  </div>
+  <div class="card">
+    <div class="scroller">
+      <table class="acct">
+        <thead><tr><th style="width:44%">Account line</th><th>Formula</th><th style="text-align:right">Value, Int$M</th></tr></thead>
+        <tbody id="acct-body"></tbody>
+      </table>
+    </div>
+    <div id="acct-notes"></div>
+  </div>
+  <div class="prose" style="margin-top:22px;">
+    <p><strong>Revaluation is a holding gain, not income.</strong> It records the change in value of the stock held at the <em>start</em> of the period, priced at the change in p&#772;. The opening stock carries the price change, not the closing stock: flows recorded during the period are priced separately at that period's own rate and would be double counted otherwise. Computing REV on the closing stock introduces a residual of &Delta;S &times; &Delta;p&#772; that breaks the account's own reconciliation, which is what Annex E Example 5 Scenario B demonstrates.</p>
+    <p><strong>OCV is a balancing item with a diagnostic reading.</strong> A negative OCV, where F<sub>t</sub> falls below q<sub>t</sub> &times; p&#772;, is the signal for administered pricing suppressing rent below scarcity value, and grounds for a Tier 2 method. That reading assumes V came from the full NPV chain. Under the Annex A constant-rent perpetuity shortcut, OCV is persistently nonzero by construction and should not on its own be read as a pricing signal.</p>
+  </div>
+</section>
+
+<!-- ===================== SIMULATOR ===================== -->
+<section class="panel" id="p-sim" hidden>
+  <div class="panel-head">
+    <h2>The valuation chain, end to end</h2>
+    <p>Annex D equations D.1 through D.6 running live. The presets load the seven Annex E worked examples. Recommendations 2, 3 and 8 are the ones you can test here.</p>
+  </div>
+  <div class="simgrid">
+    <div class="card">
+      <h3>Parameters</h3>
+      <p class="hint">Int$ throughout, km&sup3; for volumes.</p>
+      <div class="fg"><div class="fr"><span class="fl">Opening stock S<sub>0</sub> (km&sup3;)</span><span class="fv" id="v-s0">500</span></div><input type="range" id="sl-s0" min="10" max="1000" value="500" step="10"></div>
+      <div class="fg"><div class="fr"><span class="fl">Extraction q<sub>t</sub> (km&sup3;/yr)</span><span class="fv" id="v-ext">10</span></div><input type="range" id="sl-ext" min="0" max="30" value="10" step="1"></div>
+      <div class="fg"><div class="fr"><span class="fl">Net natural recharge g<sub>t</sub> (km&sup3;/yr)</span><span class="fv" id="v-rec">8</span></div><input type="range" id="sl-rec" min="-5" max="30" value="8" step="1"></div>
+      <div class="fg"><div class="fr"><span class="fl">Resource rent R<sub>t</sub> (Int$/m&sup3;)</span><span class="fv" id="v-rent">0.50</span></div><input type="range" id="sl-rent" min="0.05" max="3.00" value="0.50" step="0.05"></div>
+      <div class="fg"><div class="fr"><span class="fl">Discount rate r (%)</span><span class="fv" id="v-disc">4.0</span></div><input type="range" id="sl-disc" min="1" max="8" value="4" step="0.5"></div>
+      <div class="fg"><div class="fr"><span class="fl">Substitute ceiling p<sub>sub</sub> (Int$/m&sup3;)</span><span class="fv" id="v-sub">5.00</span></div><input type="range" id="sl-sub" min="0.10" max="5.00" value="5.00" step="0.05"></div>
+      <div class="presets" id="sim-presets"></div>
+      <div class="presets" style="border-top:0; padding-top:8px;">
+        <button class="pbtn" id="btn-pin">Pin current p&#772; as opening price</button>
+        <button class="pbtn" id="btn-unpin" hidden>Clear pin</button>
       </div>
+      <p class="hint" id="pin-status" style="margin:9px 0 0;">Not pinned. REV<sub>t</sub> is zero in a single-period snapshot. Pin, then load Example 5B, to reproduce the cross-period comparison.</p>
+    </div>
 
-      <div class="metric">
-        <div class="metric-label" id="out-dt-label">Depletion charge D<sub>t</sub> (eq. D.5) — income adjustment</div>
-        <div class="metric-value" id="out-dt">$500M</div>
-        <div id="out-badge"></div>
-        <div id="out-advisory"></div>
+    <div class="card">
+      <h3>Accounting outputs</h3>
+      <p class="hint">Every figure below is produced by the equation named beside it.</p>
+      <div class="metrics">
+        <div class="metric"><div class="ml">Annual flow value F<sub>t</sub>, to the MSUT <span class="ref">D.1</span></div><div class="mv" id="out-ft">&mdash;</div></div>
+        <div class="metric"><div class="ml">Stock asset value V, to the balance sheet <span class="ref">D.2</span></div><div class="mv" id="out-v">&mdash;</div></div>
+        <div class="metric"><div class="ml" id="out-dt-label">Depletion charge D<sub>t</sub>, to NDP <span class="ref">D.5</span></div><div class="mv" id="out-dt">&mdash;</div></div>
+        <div class="metric"><div class="ml">Unit price p&#772; = V / S<sub>0</sub> <span class="ref">D.4</span></div><div class="mv" id="out-pbar">&mdash;</div></div>
       </div>
-
-      <div class="metric ocv-metric">
-        <div class="metric-label">Balancing item OCV<sub>t</sub> = F<sub>t</sub> − (q<sub>t</sub> × p̄) — Rec 3</div>
-        <div class="metric-value" id="out-ocv">$2,500M</div>
-      </div>
-
-      <div class="metric">
-        <div class="metric-label">Closing stock value V<sub>t+1</sub> = V<sub>t</sub> + Addition<sub>t</sub> − D<sub>t</sub> + REV<sub>t</sub> + OCV<sub>t</sub> (eq. D.6)</div>
-        <div class="metric-value" id="out-vnext">$127,000M</div>
-        <div class="metric-label" id="out-rev-note" style="margin-top:4px;">REV<sub>t</sub> = $0M (not pinned)</div>
+      <div id="out-method" class="note ok"></div>
+      <div id="out-badge"></div>
+      <div id="out-advisory"></div>
+      <div class="eqs">
+        <b>F<sub>t</sub></b> = R<sub>t</sub> &times; q<sub>t</sub><br>
+        <b>V</b> = F<sub>t</sub>/r if g<sub>t</sub>&gt;0, else &Sigma;<sub>t=1..T</sub> F<sub>t</sub>/(1+r)<sup>t</sup> with T = S<sub>0</sub>/q<sub>t</sub><br>
+        <b>p&#772;</b> = V / S<sub>0</sub><br>
+        <b>D<sub>t</sub></b> = min(p&#772;, p<sub>sub</sub>) &times; max(0, q<sub>t</sub> &minus; g<sub>t</sub>)<br>
+        <b>Addition<sub>t</sub></b> = p&#772; &times; max(0, g<sub>t</sub> &minus; q<sub>t</sub>)<br>
+        <b>OCV<sub>t</sub></b> = F<sub>t</sub> &minus; q<sub>t</sub> &times; p&#772;
       </div>
     </div>
   </div>
-
-  <div class="footnote">
-    <strong>Key relationships:</strong>
-    F<sub>t</sub> = R<sub>t</sub> × q<sub>t</sub> (eq. D.1, MSUT flow value) &nbsp;|&nbsp;
-    V = F<sub>t</sub>/r if g<sub>t</sub>&gt;0 (perpetuity), or Σ<sub>t=1</sub><sup>T</sup> F<sub>t</sub>/(1+r)<sup>t</sup>, T=S₀/q<sub>t</sub>, if g<sub>t</sub>≤0 (eq. D.2; Annex A: no perpetuity for fossil aquifers) &nbsp;|&nbsp;
-    p̄ = V / S₀ (eq. D.4, operational proxy for p*) &nbsp;|&nbsp;
-    D<sub>t</sub> = min(p̄, p<sub>substitute</sub>) × max(0, q<sub>t</sub> − g<sub>t</sub>) (eq. D.5, Rec 8 cap) &nbsp;|&nbsp;
-    Addition<sub>t</sub> = p̄ × max(0, g<sub>t</sub> − q<sub>t</sub>) (eq. D.6, Case 3) &nbsp;|&nbsp;
-    OCV<sub>t</sub> = F<sub>t</sub> − q<sub>t</sub> × p̄ (Rec 3)
+  <div class="card" style="margin-top:18px;">
+    <div class="eyebrow">Annex E worked examples, reproduced by the presets</div>
+    <div class="prose" style="max-width:none; font-size:13.5px; gap:10px;" id="annexe"></div>
   </div>
+</section>
 
-  <div class="annexe-ref">
-    <div class="annexe-ref-title">Annex E worked examples — reproduced by the Load-Example buttons</div>
-    <div class="annexe-item"><strong>Ex 1</strong> — Renewable aquifer, q<sub>t</sub>=10 &gt; g<sub>t</sub>=8 km³/yr: D<sub>t</sub>=Int$500M. The constant-rent perpetuity decouples p̄ from R<sub>t</sub>, so OCV<sub>t</sub>=+Int$2,500M even under over-extraction.</div>
-    <div class="annexe-item"><strong>Ex 2</strong> — Fossil aquifer, g<sub>t</sub>=0: valued on the finite horizon T=S₀/q<sub>t</sub>=20yr Annex A requires (not the perpetuity), so D<sub>t</sub>=Int$2,718M is <em>less</em> than F<sub>t</sub>=Int$4,000M — the mathematically expected result for any correctly valued fossil aquifer. The unsustainability signal is the finite horizon itself, not a D<sub>t</sub>-vs-F<sub>t</sub> comparison.</div>
-    <div class="annexe-item"><strong>Ex 3</strong> — Over-extracted surface water: a smaller over-extraction volume than Ex 2, but a higher p̄=Int$2.25/m³, gives both a larger D<sub>t</sub> (Int$6,750M) and a larger OCV<sub>t</sub> gap.</div>
-    <div class="annexe-item"><strong>Ex 4</strong> — A second, higher-rent fossil aquifer (R<sub>t</sub>=Int$2.50/m³) chosen so the substitute ceiling genuinely binds under correct finite-horizon math. Load Ex 4A (S=80 km³, year 4): p̄=Int$1.82/m³, below the Int$2.00/m³ ceiling. Load Ex 4B (S=16 km³, year 16.8, near exhaustion): p̄=Int$2.30/m³, uncapped D<sub>t</sub> would be Int$11,519M — Rec 8's substitute ceiling caps it at Int$10,000M.</div>
-    <div class="annexe-item"><strong>Ex 5</strong> — OCV<sub>t</sub> decomposition: falls from +Int$2,500M (Scenario A, R<sub>t</sub>=0.50) to +Int$1,000M (Scenario B, R<sub>t</sub>=0.20) as R<sub>t</sub> drops, tracking the gap between current rent and the capitalized shadow price. Load Ex 5A, pin its p̄, then Load Ex 5B to see REV<sub>t</sub>=−Int$75,000M reproduce the doc's cross-scenario comparison.</div>
-    <div class="annexe-item"><strong>Ex 6</strong> — q<sub>t</sub>=8 &lt; g<sub>t</sub>=10 km³/yr: the raw D<sub>t</sub> calculation is negative, floored to zero (Case 3). The addition instead raises NDP by Int$320M.</div>
-  </div>
+</main>
+</div>
+
+<footer>
+  <p>Built against draft v4.97.0 of Guidance Note D.7, <em>Valuation of Water Resources for SEEA CF 2028</em>. Section, paragraph and equation references point into that draft. Every figure in sections 05 and 06 is computed live from Annex D; none are stored.</p>
+  <p>Recommendations and questions are reproduced from &sect;4, &sect;5.3 and &sect;5.4. Where this companion condenses, the draft governs.</p>
+</footer>
 </div>
 
 <script>
-  const $ = id => document.getElementById(id);
-  const sliders = { s0: $('sl-s0'), ext: $('sl-ext'), rec: $('sl-rec'), rent: $('sl-rent'), disc: $('sl-disc'), sub: $('sl-sub') };
+const $ = id => document.getElementById(id);
 
-  function fmtM(n) {
-    const sign = n < 0 ? '−' : '';
-    return sign + '$' + Math.round(Math.abs(n)).toLocaleString() + 'M';
+/* ---------------- data ---------------- */
+const RECS = [
+{n:1, title:"Scope of Water Resources", sec:"&sect;3.1", prio:1,
+ target:"Monetary asset account (AN.34)",
+ paras:"&sect;5.11.1&ndash;5.11.2, paras. 5.469&ndash;5.480; SNA 2025 para. 11.203",
+ shift:"Defines AN.34 scope with confirmed inclusions, confirmed exclusions, and open questions on which TC direction is sought.",
+ gist:"A use is in scope where an enforceable use right exists, the use generates SNA-recorded output or measurable access expenditure, and it is recordable as a water use in the water PSUT. Hydropower, permitted thermal cooling and toll-generating canal operation pass that test and stay in AN.34. A canal that is pure conveyance does not: the productive input belongs to the downstream use instead. Water bodies delivering value only through uses that fail all three conditions go to SEEA EA, and physical accounts still record everything regardless.",
+ qs:["TC5","TC3","GCa","GCb","GCc","GCd","GCe"], demo:"scope"},
+{n:2, title:"Valuation Targets", sec:"&sect;3.5", prio:0,
+ target:"Balance sheet (V), MSUT (F<sub>t</sub>), income (D<sub>t</sub>)",
+ paras:"&sect;5.11.4, plus a new annex",
+ shift:"Separates stock value from annual flow and from depreciation, and specifies which target each account requires.",
+ gist:"Three distinct targets, currently conflated. V for balance sheet entries, F<sub>t</sub> for the monetary supply and use table, D<sub>t</sub> for net domestic product and net national income. Annex D specifies how they relate.",
+ qs:["GCf"], demo:"sim"},
+{n:3, title:"MSUT and Asset Account Reconciliation", sec:"&sect;3.6.3", prio:0,
+ target:"Balancing item (OCV)",
+ paras:"&sect;5.11.4, plus new paragraphs on reconciliation",
+ shift:"Mandates joint compilation of the MSUT and asset accounts; requires OCV to be reported and interpreted in metadata.",
+ gist:"The MSUT values abstraction at the annual resource rent F<sub>t</sub> = R<sub>t</sub> &times; q<sub>t</sub>. The asset account values the same extraction at q<sub>t</sub> &times; p&#772;, the operational proxy for the marginal shadow price, since p* is rarely estimated directly. The two do not agree, and the gap is real information rather than an error to suppress. Report OCV = F<sub>t</sub> &minus; q<sub>t</sub>p&#772; in metadata with a narrative reading. Large or persistent entries mean the two estimation methods need review.",
+ qs:[], demo:"account"},
+{n:4, title:"Method Hierarchy", sec:"&sect;3.4", prio:1,
+ target:"Monetary supply-use table",
+ paras:"&sect;5.11.4, plus a new subsection on method hierarchy",
+ shift:"Establishes a two-tier hierarchy: Tier 1 observed exchange prices, Tier 2 exchange-value-compatible estimation. Excludes welfare measures from monetary accounts.",
+ gist:"Tier 1 covers methods that directly observe exchange prices. For most water resources, regulated or zero prices mean Tier 1 yields zero or negative rent, which Recommendation 5 addresses. Tier 2 covers exchange-value-compatible estimation, with a conditional sub-tier for methods needing specific data conditions. Stated preference methods, and travel cost applications producing a surplus contingent on an elasticity assumption, are ineligible for any tier regardless of data quality or study design.",
+ qs:[], demo:"methods"},
+{n:5, title:"Zero and Negative Resource Rents", sec:"&sect;3.4", prio:1,
+ target:"Monetary supply-use table",
+ paras:"&sect;5.11.4, shared subsection with Rec 4",
+ shift:"Acknowledges that standard resource rent calculation fails for water because of artificial pricing, and directs compilers to market prices, replacement cost, or productivity methods instead.",
+ gist:"Confirm Tier 1 genuinely does not apply first: a specific basin or sub-market may have a competitive market even where national pricing is regulated. Then apply whichever Tier 2 condition is met. Replacement cost and residual value are not a fallback pair, they measure an avoidance cost against a productivity contribution. Where both conditions hold, report both and document the divergence, since that divergence measures the degree of market failure in water pricing. The Fenichel production approach to stock valuation is put to the committee rather than recommended.",
+ qs:["GCf"], demo:"methods"},
+{n:6, title:"Spatial Compilation", sec:"&sect;3.2.2", prio:1,
+ target:"River-basin-level accounts",
+ paras:"&sect;5.11.4, paras. 5.493&ndash;5.496 and 5.488&ndash;5.492",
+ shift:"Requires bottom-up aggregation from river basin estimates; prohibits estimating a national unit price from national data directly.",
+ gist:"Estimate V<sub>k</sub> at river basin level from the NPV of basin-specific rent, derive p&#772;<sub>k</sub> = V<sub>k</sub>/S<sub>k</sub>, then sum V<sub>k</sub> to national totals. The reverse sequence, a single national average price multiplied by national stock, produces a number that is neither economically nor hydrologically meaningful, because national averages suppress the scarcity variation across basins that makes the accounts useful for allocation. A specific instance of the modifiable areal unit problem. A national average may still be reported as a summary statistic, but it is not the estimation target.",
+ qs:[], demo:""},
+{n:7, title:"Water Quality", sec:"&sect;3.3.3", prio:1,
+ target:"OCV quality adjustments",
+ paras:"New subsection: quality classification (physical) and quality adjustment (monetary)",
+ shift:"Requires quality documentation and OCV stock adjustment for quality-driven changes.",
+ gist:"This is a physical accounting question first. Classify water into quality classes or grades by salinity, treatment requirement, or ecological and chemical status, before any monetary adjustment is attempted. Where data support adjusting usable stock S or rent F<sub>t</sub>, make the adjustment and document the method. Quality-driven reductions in usable stock are other changes in volume, distinct from depletion, which records only quantity extracted in excess of recharge. The distinction matters because depletion is a cost of production entering NDP and a quality revaluation is not.",
+ qs:["TC4"], demo:"account"},
+{n:8, title:"Valuation at the Extremes", sec:"&sect;3.4, &sect;3.6.1", prio:0,
+ target:"Depletion cap (D<sub>t</sub>)",
+ paras:"New subsection, plus &sect;5.4.3 paras. 5.107&ndash;5.108",
+ shift:"Caps the depletion charge at substitute cost near exhaustion; zero where water is genuinely plentiful; NA where recharge data are missing.",
+ gist:"Three situations where the standard method breaks. Near exhaustion, cap the charge at the unit cost of the cheapest substitute supply realistically accessible at scale, because rational users would switch before paying more. Under genuine hydrological abundance, zero depletion is the correct entry and Tier 2 substitution is not required, which is a different case from the zero-rent institutional failure in Rec 5. Where recharge data are unavailable, report NA rather than zero: a missing estimate is not evidence of no depletion. Zero depletion indicates sustainable extraction, not absence of asset value.",
+ qs:["TC1","TC2"], demo:"sim"}
+];
+
+const QS = [
+{id:"GCa", kind:"gc", title:"Reservoir waters in the physical asset account", sec:"&sect;3.1.1",
+ text:"Does your country currently record reservoir waters separately from lakes in the physical asset account?",
+ ask:"Country practice report"},
+{id:"GCb", kind:"gc", title:"Soil water in scope of valuation", sec:"&sect;3.1.3",
+ text:"Should soil water be in scope of valuation?",
+ ask:"Scope direction. The note treats this as separable: countries can compile complete and internally consistent accounts for the confirmed categories without waiting for it."},
+{id:"GCc", kind:"gc", title:"Glaciers and seasonal snowpack in scope", sec:"&sect;3.1.3",
+ text:"Should glaciers and seasonal snowpack be in scope of valuation?",
+ ask:"Scope direction, separable in the same way as soil water."},
+{id:"GCd", kind:"gc", title:"AN.34 values for in-stream productive uses", sec:"&sect;3.8.2",
+ text:"Does your country currently record an AN.34 value for hydroelectric reservoirs, thermal cooling water, or canal operation water? If so, which valuation method is used and what data sources are drawn on? If not, what barriers, conceptual, legal, or data, prevent compilation?",
+ ask:"Country practice plus a barriers diagnosis"},
+{id:"GCe", kind:"gc", title:"Effect of the SNA 2025 AN.32 classification", sec:"&sect;3.8.3",
+ text:"Does the AN.32 (AN322S3) classification for hydroelectric generation capacity in SNA 2025 affect how your country currently reports or plans to report hydroelectric water resources?",
+ ask:"Country practice on the AN.34 / AN.32 boundary"},
+{id:"GCf", kind:"gc", title:"Discount rate in practice", sec:"&sect;3.5.2",
+ text:"&sect;3.5.2 recommends a risk-free rate consistent with national accounts practice, with the cost of long-term government debt adjusted for expected inflation as one operational approach. Do countries currently follow this, and what specific rates are used? Do any countries use a social discount rate instead? Is a bounded recommended range, for example 2 to 5 percent, preferable to country-specific discretion?",
+ ask:"Country practice, plus a view on whether the range should be bounded"},
+
+{id:"TC1", kind:"tc", title:"Regeneration and negative depletion", sec:"&sect;3.6.1",
+ text:"Does the treatment proposed in &sect;3.6.1 appropriately capture the economics of under-extraction, and how should it interact with GN D4 Option 3?",
+ ask:"A decision on the Case 3 addition treatment and its D4 interface"},
+{id:"TC2", kind:"tc", title:"Negative net natural recharge", sec:"&sect;3.2.3, &sect;3.6.1",
+ text:"&sect;3.2.3 defines g<sub>t</sub> as net natural recharge, additions minus natural losses, which allows g<sub>t</sub> to fall below zero in a drought year independent of any extraction. Equation D.5 does not distinguish this from ordinary over-extraction: a negative g<sub>t</sub> mechanically inflates D<sub>t</sub> by the full natural loss, attributing a climate-driven stock decline to the production account as if it were extraction-driven. Hydrological estimation methods do not net recharge and loss into a single signed variable this way. Should negative g<sub>t</sub> instead route through the physical and monetary other-changes-in-volume line, leaving D<sub>t</sub> to capture only extraction beyond whatever recharge actually occurred?",
+ ask:"A decision on where a climate-driven stock decline is recorded. Load the drought preset in section 06 to see the current formula run.",
+ demo:"drought"},
+{id:"TC3", kind:"tc", title:"Consistency across AN.34, AN.32 and GN D4", sec:"&sect;3.8.3",
+ text:"What changes, if any, are needed in GN D7 guidance to ensure consistent treatment across AN.34, AN.32, and GN D4 infrastructure values? Specifically, which class should carry the resource rent, and should an additive framework summing to total site value without overlap be mandated?",
+ ask:"A decision on which classification carries the rent, and whether additivity is mandated"},
+{id:"TC4", kind:"tc", title:"A monetary degradation cost for quality loss", sec:"&sect;3.3.3",
+ text:"Should the updated SEEA CF introduce a monetary degradation cost for water quality loss, separate from depletion and from OCV stock adjustments?",
+ ask:"A decision on whether a third quality entry exists at all. Named in the executive summary as one of four points where reviewer input matters most."},
+{id:"TC5", kind:"tc", title:"SNA asset-boundary test for water", sec:"&sect;1.3, &sect;2.1, &sect;5.5",
+ text:"This note follows the traditional convention that its monetary scope equals the SNA's: any water resource within the proposed AN.34 boundary is treated as meeting the SNA economic-asset criteria by definition. That correspondence has not, to the authors' knowledge, been rigorously tested against SNA criteria for water specifically, as it has for other environmental assets with longer-established treatment. Does the TC agree that the water resources within this note's proposed scope satisfy the SNA 2025 economic-asset test in practice, or is additional guidance needed? A specific part of that question: since enforceability of use rights is set by the domestic water-rights regime and varies by jurisdiction, and sometimes within one, does the SNA test need guidance on how to apply it across riparian, prior-appropriation, permit-based, and communal or customary regimes, or is that a matter for country-level judgment?",
+ ask:"An answer on whether the scope test survives the SNA asset criteria. Named in the executive summary as the question the committee is asked to weigh in on for Rec 1.",
+ demo:"scope"},
+{id:"TC6", kind:"tc", title:"Institutional sector attribution for water", sec:"&sect;3.7.4, Annex F",
+ text:"&sect;3.7.4 and Annex F extend the SNA 2025 split-asset approach to water, sharing depletion and stock value between the legal owner and the extractor in proportion to the owner's share of resource rent received. That ratio is observable where a licence fee or royalty is paid. It is not where water rights are held communally or under customary tenure without a single identifiable legal owner, or where ownership is shared across national, state or provincial, and river-basin authorities. Does the TC agree the split-asset approach should extend to water on these terms? How should compilers determine the ownership share when no rent is observed, and what should the default be when it cannot be determined at all?",
+ ask:"A decision on the split-asset extension, plus a default rule for unobservable ownership shares"}
+];
+
+const OPTIONS = [
+{k:"A", tier:"1", name:"Market prices", cond:"mA",
+ desc:"Observed competitive transaction prices used directly as the resource rent estimate. Also covers the resource rent / net price method where observed prices genuinely reflect scarcity.",
+ verify:"No other method required"},
+{k:"B", tier:"2", name:"Replacement cost", cond:"mB",
+ desc:"The documented cost of the next-best alternative supply, such as desalination or inter-basin transfer. Measures avoidance cost. Valid only where that alternative would genuinely be implemented, from audited ex-post records rather than modelled engineering costs.",
+ verify:"Verify against Option A where available; compare with C where both compute"},
+{k:"C", tier:"2 Cond.", name:"Residual value / production function", cond:"mC",
+ desc:"Gross output less all produced factor payments, or the marginal product of water estimated directly. Measures productivity contribution. The production function variant is preferred for own-account abstractors.",
+ verify:"Verify against Option A or B"},
+{k:"D", tier:"2 Cond.", name:"Hedonic pricing", cond:"mD",
+ desc:"The implicit price of water access inferred from land or property transactions where rights are bundled with land.",
+ verify:"Verify against Option A or B. Unreliable where property markets are thin or regulated"},
+{k:"F", tier:"2 Cond.", name:"Travel cost", cond:"mF",
+ desc:"The marginal cost of access recovered from observed travel expenditure, used as a revealed exchange price in the same way Option A uses market transactions.",
+ verify:"Verify against Option A or B. Must recover a price from observed expenditure, not by integrating a demand curve"},
+{k:"E", tier:"2", name:"Benefit transfer", cond:"mE",
+ desc:"A unit value adapted from a documented Tier 1 or Tier 2 primary study, scaled by a transfer function rather than a point transfer. Interim measure while primary compilation capacity is developed.",
+ verify:"Source study cited in metadata. Not a permanent substitute"}
+];
+
+const EXAMPLES = [
+{k:"ex1", label:"Ex 1", t:"<b>Example 1, renewable unconfined aquifer.</b> q<sub>t</sub>=10 exceeds g<sub>t</sub>=8 km&sup3;/yr, so D<sub>t</sub>=Int$500M. The constant-rent perpetuity decouples p&#772; from R<sub>t</sub>, which is why OCV stays at +Int$2,500M even under over-extraction."},
+{k:"ex2", label:"Ex 2", t:"<b>Example 2, fossil confined aquifer, g<sub>t</sub>=0.</b> Valued on the finite horizon T = S<sub>0</sub>/q<sub>t</sub> = 20 years that Annex A requires, not the perpetuity. D<sub>t</sub>=Int$2,718M is therefore <em>less</em> than F<sub>t</sub>=Int$4,000M, the mathematically expected result for any correctly valued fossil aquifer. The unsustainability signal is the finite horizon itself, not a comparison of D<sub>t</sub> against F<sub>t</sub>."},
+{k:"ex3", label:"Ex 3", t:"<b>Example 3, over-extracted surface water.</b> A smaller over-extraction volume than Example 2 but a higher p&#772; of Int$2.25/m&sup3; gives both a larger D<sub>t</sub> at Int$6,750M and a larger OCV gap."},
+{k:"ex4a", label:"Ex 4A", t:"<b>Example 4A, higher-rent fossil aquifer at S=80 km&sup3;.</b> Year 4, R<sub>t</sub>=Int$2.50/m&sup3;. p&#772;=Int$1.82/m&sup3;, below the Int$2.00 substitute ceiling, so the cap does not bind."},
+{k:"ex4b", label:"Ex 4B", t:"<b>Example 4B, the same aquifer near exhaustion at S=16 km&sup3;.</b> Year 16.8. p&#772; rises to Int$2.30/m&sup3;, uncapped D<sub>t</sub> would be Int$11,519M, and Recommendation 8's substitute ceiling caps it at Int$10,000M. &Delta;S/S here is 31 percent, which is where the Harberger approximation stops holding and direct estimation of p* is required."},
+{k:"ex5a", label:"Ex 5A", t:"<b>Example 5A, OCV decomposition, scenario A.</b> R<sub>t</sub>=0.50 gives OCV=+Int$2,500M. Pin p&#772; here, then load 5B."},
+{k:"ex5b", label:"Ex 5B", t:"<b>Example 5B, scenario B.</b> R<sub>t</sub> drops to 0.20 and OCV falls to +Int$1,000M, tracking the gap between current rent and the capitalized shadow price. With 5A pinned, REV<sub>t</sub> reproduces the document's cross-scenario comparison."},
+{k:"ex6", label:"Ex 6", t:"<b>Example 6, under-extraction.</b> q<sub>t</sub>=8 below g<sub>t</sub>=10 km&sup3;/yr. The raw depletion calculation is negative and floors to zero under Case 3. The addition raises NDP by Int$320M instead."},
+{k:"drought", label:"Drought, g<sub>t</sub>&lt;0", t:"<b>Drought demonstration, not an Annex E example.</b> g<sub>t</sub>=&minus;2 km&sup3;/yr, net natural loss before any extraction. Equation D.5 still runs and books the full natural loss as if it were extraction-driven. That behaviour is exactly what TC Question 2 asks the committee to rule on."}
+];
+
+const PRESETS = {
+  ex1:{s0:500,qt:10,gt:8,rt:0.50,disc:4,sub:5.00},
+  ex2:{s0:100,qt:5,gt:0,rt:0.80,disc:4,sub:5.00},
+  ex3:{s0:50,qt:15,gt:12,rt:0.30,disc:4,sub:5.00},
+  ex4a:{s0:80,qt:5,gt:0,rt:2.50,disc:4,sub:2.00},
+  ex4b:{s0:16,qt:5,gt:0,rt:2.50,disc:4,sub:2.00},
+  ex5a:{s0:500,qt:10,gt:8,rt:0.50,disc:4,sub:5.00},
+  ex5b:{s0:500,qt:10,gt:8,rt:0.20,disc:4,sub:5.00},
+  ex6:{s0:500,qt:8,gt:10,rt:0.40,disc:4,sub:5.00},
+  drought:{s0:200,qt:5,gt:-2,rt:0.40,disc:4,sub:2.00}
+};
+
+const SCOPE_CASES = [
+ {n:"Hydropower generation", c:[1,1,1]},
+ {n:"Thermal cooling, permitted", c:[1,1,1]},
+ {n:"Thermal cooling, no permit", c:[0,1,0]},
+ {n:"Canal with navigation tolls", c:[1,1,1]},
+ {n:"Canal as pure conveyance", c:[1,0,1]},
+ {n:"Water park under concession", c:[1,1,1]},
+ {n:"Lake valued for scenery only", c:[0,0,0]},
+ {n:"Environmental base flow", c:[0,0,1]}
+];
+
+/* ---------------- navigation ---------------- */
+const PANELS = ["overview","recs","questions","scope","methods","account","sim"];
+const SLUG = {overview:"overview", recs:"recommendations", questions:"open-questions",
+  scope:"scope-test", methods:"method-hierarchy", account:"an34-account", sim:"valuation-chain"};
+const UNSLUG = Object.fromEntries(Object.entries(SLUG).map(([k,v]) => [v,k]));
+
+function go(id, writeHash){
+  if (!PANELS.includes(id)) id = "overview";
+  PANELS.forEach(p => { $("p-"+p).hidden = (p !== id); });
+  document.querySelectorAll(".railbtn").forEach(b => b.setAttribute("aria-current", String(b.dataset.go === id)));
+  if (writeHash !== false && location.hash.slice(1) !== SLUG[id]){
+    history.replaceState(null, "", "#" + SLUG[id]);
   }
-  function fmt3(n) { return '$' + n.toFixed(3); }
+  window.scrollTo({top:0, behavior:"instant"});
+}
+document.querySelectorAll(".railbtn").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+window.addEventListener("hashchange", () => {
+  const id = UNSLUG[location.hash.slice(1)];
+  if (id) go(id, false);
+});
 
-  let pin = null; // { pbar, s0 }
+/* ---------------- recommendations ---------------- */
+function qClass(id){ return id.startsWith("TC") ? "tc" : "gc"; }
+function qLabel(id){ return id.startsWith("TC") ? "TC " + id.slice(2) : "GC (" + id.slice(2) + ")"; }
+const DEMO_LABEL = {scope:"Scope test", methods:"Method hierarchy", account:"AN.34 account", sim:"Valuation chain"};
 
-  // ---- the doc's own valuation chain (eq. D.1-D.4) ----
-  // Ft: eq. D.1. V: eq. D.2 — renewable resources (gt>0) use the constant-rent
-  // perpetuity V=Ft/r; fossil / non-recharging resources (gt<=0) use the
-  // finite-horizon NPV Annex A requires instead (V=sum Ft/(1+r)^t, t=1..T,
-  // T=S0/qt), since the perpetuity formula is explicitly prohibited for those
-  // cases (it overstates V, and so overstates Dt). The closed-form annuity
-  // V = Ft*(1-(1+r)^-T)/r is algebraically identical to that finite sum for
-  // integer T and generalizes cleanly to the fractional T a mid-depletion
-  // stock (e.g. Annex E Ex. 4's S=16km3, T=3.2yr) produces.
-  function computeV(s0, qt, gt, rt, disc) {
-    const ft = rt * qt * 1000; // Int$M (eq. D.1)
-    let V, method;
-    if (gt <= 0 && qt > 0) {
-      const T = s0 / qt;
-      V = ft * (1 - Math.pow(1 + disc, -T)) / disc;
-      method = 'finite-horizon NPV, T=S₀/q<sub>t</sub>=' + T.toFixed(1) + 'yr (g<sub>t</sub>≤0; Annex A: no perpetuity for fossil aquifers)';
-    } else {
-      V = ft / disc;
-      method = 'perpetuity, V=F<sub>t</sub>/r (g<sub>t</sub>&gt;0, indefinite horizon)';
-    }
-    return { ft, V, method };
-  }
+function renderRecs(filter){
+  const host = $("recs"); host.innerHTML = "";
+  RECS.filter(r => filter === "all"
+      || (filter === "prio" && r.prio)
+      || (filter === "open" && r.qs.length)
+      || (filter === "demo" && r.demo))
+    .forEach(r => {
+      const d = document.createElement("details");
+      d.className = "rec"; d.dataset.prio = r.prio;
+      const tags = [];
+      if (r.prio) tags.push('<span class="tag prio">Reviewer priority</span>');
+      const nTC = r.qs.filter(q => q.startsWith("TC")).length;
+      const nGC = r.qs.filter(q => q.startsWith("GC")).length;
+      if (nTC) tags.push('<span class="tag tc">' + nTC + ' TC</span>');
+      if (nGC) tags.push('<span class="tag gc">' + nGC + ' GC</span>');
+      const links = r.qs.map(q =>
+        '<button class="qlink ' + qClass(q) + '" data-q="' + q + '">' + qLabel(q) + '</button>').join("")
+        + (r.demo ? '<button class="qlink demo" data-demo="' + r.demo + '">&rarr; ' + DEMO_LABEL[r.demo] + '</button>' : "");
+      d.innerHTML =
+        '<summary><span class="rn">Rec ' + r.n + '</span>' +
+        '<span><span class="rt">' + r.title + '</span><div class="rmeta">' + r.shift + '</div></span>' +
+        '<span class="rtags">' + tags.join("") + '</span></summary>' +
+        '<div class="body"><p class="gist">' + r.gist + '</p>' +
+        '<dl class="kv">' +
+        '<dt>Argued in</dt><dd>' + r.sec + '</dd>' +
+        '<dt>Accounting target</dt><dd>' + r.target + '</dd>' +
+        '<dt>SEEA CF to revise</dt><dd>' + r.paras + '</dd>' +
+        '</dl>' + (links ? '<div class="linkrow">' + links + '</div>' : '') + '</div>';
+      host.appendChild(d);
+    });
+  host.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", e => {
+    e.preventDefault(); openQuestion(b.dataset.q);
+  }));
+  host.querySelectorAll("[data-demo]").forEach(b => b.addEventListener("click", e => {
+    e.preventDefault(); go(b.dataset.demo);
+  }));
+}
+document.querySelectorAll("[data-f]").forEach(c => c.addEventListener("click", () => {
+  document.querySelectorAll("[data-f]").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
+  renderRecs(c.dataset.f);
+}));
 
-  function run() {
-    const s0   = +sliders.s0.value;
-    const qt   = +sliders.ext.value;
-    const gt   = +sliders.rec.value;
-    const rt   = +sliders.rent.value;
-    const disc = +sliders.disc.value / 100;
-    const sub  = +sliders.sub.value;
-
-    $('v-s0').textContent   = s0;
-    $('v-ext').textContent  = qt;
-    $('v-rec').textContent  = gt;
-    $('v-rent').textContent = rt.toFixed(2);
-    $('v-disc').textContent = (disc * 100).toFixed(1);
-    $('v-sub').textContent  = sub.toFixed(2);
-
-    const { ft, V, method } = computeV(s0, qt, gt, rt, disc);
-    const pbar = (V / s0) / 1000;               // Int$/m3 (eq. D.4)
-
-    $('out-ft').textContent   = fmtM(ft);
-    $('out-v').textContent    = fmtM(V);
-    $('out-v-method').innerHTML = method;
-    $('out-pbar').textContent = fmt3(pbar);
-
-    // ---- Case 1/2/3 (§3.6.1), with a tolerance band on the qt/gt ratio when gt>0 ----
-    const netFlow = qt - gt;
-    let caseNum;
-    if (gt > 0) {
-      const ratio = qt / gt;
-      if (ratio >= 0.95 && ratio <= 1.05) caseNum = 2;
-      else caseNum = qt > gt ? 1 : 3;
-    } else {
-      caseNum = netFlow > 0 ? 1 : 2; // gt<=0: any extraction, or a pure natural loss, reads as Case 1
-    }
-
-    let dt = 0, additionT = 0, badge = '', advisory = '';
-
-    if (caseNum === 1) {
-      const unitCost = Math.min(pbar, sub);
-      dt = unitCost * netFlow * 1000;
-      const capped = unitCost === sub && sub < pbar;
-      badge = capped
-        ? '<span class="badge badge-warn">Rec 8: substitute ceiling active (cf. Annex E Ex. 4, Case B)</span>'
-        : '<span class="badge badge-warn">Case 1 — depletion charge (eq. D.5; cf. Annex E Ex. 1–3)</span>';
-    } else if (caseNum === 3) {
-      additionT = pbar * (gt - qt) * 1000;
-      badge = '<span class="badge badge-addition">Case 3 — under-extraction, Addition<sub>t</sub> (eq. D.6; cf. Annex E Ex. 6)</span>';
-    } else {
-      badge = '<span class="badge badge-ok">Case 2 — sustainable, D<sub>t</sub> = 0 (eq. D.5)</span>';
-    }
-
-    // ---- Negative-recharge advisory: raised as TC Question 2, not yet resolved ----
-    if (gt < 0) {
-      advisory += '<div class="advisory advisory-drought"><strong>g<sub>t</sub> &lt; 0:</strong> net natural recharge is negative — natural losses (evapotranspiration, natural outflow) exceed additions, before any extraction. The formula still runs (max(0, q<sub>t</sub>−g<sub>t</sub>) just grows), booking the full natural loss as if it were extraction-driven. TC Question 2 (§3.6.1, §5.4) asks the Technical Committee whether this should instead route through the physical/monetary other-changes-in-volume line (§3.2.3). Posed, not resolved — this demo runs the formula as currently written.</div>';
-    }
-
-    // ---- ΔS/S validity warning, echoing Annex E Ex. 4's own caveat ----
-    const deltaSS = s0 > 0 ? Math.abs(netFlow) / s0 : 0;
-    if (caseNum === 1 && deltaSS > 0.10) {
-      advisory += '<div class="advisory advisory-validity"><strong>ΔS/S = ' + (deltaSS*100).toFixed(0) + '%:</strong> the Harberger/perpetuity approximation is losing validity here (cf. Annex E Ex. 4, where ΔS/S=31% required direct p*=∂V/∂S estimation instead of this tool\'s p̄=V/S shortcut).</div>';
-    }
-
-    $('out-dt-label').textContent = caseNum === 3
-      ? 'Additionₜ (eq. D.6) — Case 3, raises NDP'
-      : 'Depletion charge Dₜ (eq. D.5) — income adjustment';
-    $('out-dt').textContent = caseNum === 3 ? fmtM(additionT) : fmtM(dt);
-    $('out-badge').innerHTML = badge;
-    $('out-advisory').innerHTML = advisory;
-
-    // ---- OCV (Rec 3) ----
-    const ocv = ft - qt * pbar * 1000;
-    $('out-ocv').textContent = fmtM(ocv);
-
-    // ---- REV (only nonzero once an opening price is pinned — Annex E Ex. 5) ----
-    let rev = 0;
-    if (pin) {
-      rev = pin.s0 * (pbar - pin.pbar) * 1000;
-      $('out-rev-note').textContent = 'REVₜ = ' + fmtM(rev) + ' vs. pinned p̄=' + fmt3(pin.pbar) + '/m³ at S=' + pin.s0 + ' km³';
-    } else {
-      $('out-rev-note').textContent = 'REVₜ = $0M (not pinned)';
-    }
-
-    const vnext = V - dt + additionT + rev + ocv;
-    $('out-vnext').textContent = fmtM(vnext);
-  }
-
-  function setSliders(v) {
-    sliders.s0.value = v.s0; sliders.ext.value = v.qt; sliders.rec.value = v.gt;
-    sliders.rent.value = v.rt; sliders.disc.value = v.disc;
-    if (v.sub !== undefined) sliders.sub.value = v.sub;
-    run();
-  }
-
-  const PRESETS = {
-    ex1:     { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
-    ex2:     { s0: 100, qt: 5,  gt: 0,  rt: 0.80, disc: 4, sub: 5.00 },
-    ex3:     { s0: 50,  qt: 15, gt: 12, rt: 0.30, disc: 4, sub: 5.00 },
-    ex4a:    { s0: 80,  qt: 5,  gt: 0,  rt: 2.50, disc: 4, sub: 2.00 },
-    ex4b:    { s0: 16,  qt: 5,  gt: 0,  rt: 2.50, disc: 4, sub: 2.00 },
-    ex5a:    { s0: 500, qt: 10, gt: 8,  rt: 0.50, disc: 4, sub: 5.00 },
-    ex5b:    { s0: 500, qt: 10, gt: 8,  rt: 0.20, disc: 4, sub: 5.00 },
-    ex6:     { s0: 500, qt: 8,  gt: 10, rt: 0.40, disc: 4, sub: 5.00 },
-    drought: { s0: 200, qt: 5,  gt: -2, rt: 0.40, disc: 4, sub: 2.00 },
-  };
-
-  document.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.addEventListener('click', () => setSliders(PRESETS[btn.dataset.preset]));
+/* ---------------- questions ---------------- */
+function renderQs(filter){
+  const host = $("qgrid"); host.innerHTML = "";
+  QS.filter(q => filter === "all" || q.kind === filter).forEach(q => {
+    const el = document.createElement("article");
+    el.className = "q " + q.kind; el.id = "q-" + q.id;
+    el.innerHTML =
+      '<div class="qhead"><span class="qid">' + (q.kind === "tc" ? "TC Question " + q.id.slice(2) : "GC Question (" + q.id.slice(2) + ")") + '</span>' +
+      '<span class="qtitle">' + q.title + '</span>' +
+      '<span class="tag ' + q.kind + '">' + (q.kind === "tc" ? "Committee decision" : "Country input") + '</span></div>' +
+      '<p class="qtext">' + q.text + '</p>' +
+      '<div class="ask"><b>What is being asked</b>' + q.ask + '</div>' +
+      '<div class="qfoot"><span class="ref">' + q.sec + '</span>' +
+      (q.demo ? '<button class="qlink demo" data-demo2="' + (q.demo === "drought" ? "sim" : q.demo) + '" data-preset="' + (q.demo === "drought" ? "drought" : "") + '">&rarr; see it run</button>' : '') +
+      '</div>';
+    host.appendChild(el);
   });
+  host.querySelectorAll("[data-demo2]").forEach(b => b.addEventListener("click", () => {
+    go(b.dataset.demo2);
+    if (b.dataset.preset) setSliders(PRESETS[b.dataset.preset]);
+  }));
+}
+document.querySelectorAll("[data-qf]").forEach(c => c.addEventListener("click", () => {
+  document.querySelectorAll("[data-qf]").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
+  renderQs(c.dataset.qf);
+}));
+function openQuestion(id){
+  const kind = id.startsWith("TC") ? "tc" : "gc";
+  document.querySelectorAll("[data-qf]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.qf === kind)));
+  renderQs(kind);
+  go("questions");
+  const el = $("q-" + id);
+  if (el){ el.classList.add("flash"); el.scrollIntoView({block:"center", behavior:"smooth"}); setTimeout(() => el.classList.remove("flash"), 2400); }
+}
 
-  $('btn-pin').addEventListener('click', () => {
-    const s0   = +sliders.s0.value;
-    const qt   = +sliders.ext.value;
-    const gt   = +sliders.rec.value;
-    const rt   = +sliders.rent.value;
-    const disc = +sliders.disc.value / 100;
-    const { V } = computeV(s0, qt, gt, rt, disc);
-    const pbar = (V / s0) / 1000;
-    pin = { pbar, s0 };
-    $('pin-status').textContent = 'Pinned: p̄=' + fmt3(pbar) + '/m³ at S=' + s0 + ' km³. Now change Rₜ (e.g. Load Ex 5B) to see REVₜ.';
-    $('btn-unpin').style.display = 'inline-block';
-    run();
+/* ---------------- scope test ---------------- */
+function renderScope(){
+  const c = [$("sc1").checked, $("sc2").checked, $("sc3").checked];
+  const n = c.filter(Boolean).length;
+  let cls, head, words;
+  if (n === 3){
+    cls = "in"; head = "In scope of AN.34";
+    words = "All three conditions hold, so this use is recorded and valued in the monetary water resource asset account, on the same basis as abstraction.";
+  } else if (!c[1] && !c[0] && !c[2]){
+    cls = "out"; head = "SEEA EA, not AN.34";
+    words = "The value is delivered entirely through uses with no enforceable right, no SNA-recorded output or measurable access expenditure, and no PSUT use entry. This belongs in SEEA EA ecosystem service accounts. Physical accounts still record the water body.";
+  } else {
+    cls = "part"; head = "Out of AN.34 scope";
+    const miss = [];
+    if (!c[0]) miss.push("no enforceable use right");
+    if (!c[1]) miss.push("no SNA-recorded output or measurable access expenditure");
+    if (!c[2]) miss.push("not recordable as a water use in the PSUT");
+    words = "The test fails on " + miss.join(", ") + ". The use falls under Boundary 2 rather than the confirmed inclusions. Where a canal is pure conveyance moving water to a downstream use, attribute the productive input to that downstream use instead.";
+  }
+  $("scope-out").innerHTML =
+    '<div class="verdict ' + cls + '"><div class="vl">' + n + ' of 3 conditions met</div>' +
+    '<div class="vv">' + head + '</div><div class="vw">' + words + '</div></div>';
+}
+["sc1","sc2","sc3"].forEach(id => $(id).addEventListener("change", renderScope));
+$("scope-presets").innerHTML = SCOPE_CASES.map((s, i) =>
+  '<button class="pbtn" data-sc="' + i + '">' + s.n + '</button>').join("");
+$("scope-presets").querySelectorAll("[data-sc]").forEach(b => b.addEventListener("click", () => {
+  const s = SCOPE_CASES[+b.dataset.sc];
+  $("sc1").checked = !!s.c[0]; $("sc2").checked = !!s.c[1]; $("sc3").checked = !!s.c[2];
+  renderScope();
+}));
+
+/* ---------------- method hierarchy ---------------- */
+function renderMethods(){
+  const on = {};
+  OPTIONS.forEach(o => { on[o.k] = $(o.cond).checked; });
+  const eligible = OPTIONS.filter(o => on[o.k]);
+  const best = eligible[0];
+  let head;
+  if (!eligible.length){
+    head = '<div class="verdict out"><div class="vl">No eligible option</div><div class="vv">Document as a data limitation</div>' +
+      '<div class="vw">No tier condition is satisfied. Recommendation 8 applies where the failure is a missing recharge estimate: report NA rather than zero. A confirmed zero and a data gap are different entries.</div></div>';
+  } else if (best.k === "A"){
+    head = '<div class="verdict in"><div class="vl">Highest eligible tier</div><div class="vv">Tier 1, Option A</div>' +
+      '<div class="vw">Where Tier 1 conditions hold, no other method is required. Where they hold for only part of the resource base, apply Option A to those sub-basins and a Tier 2 method elsewhere, reporting the split in metadata.</div></div>';
+  } else {
+    const both = on.B && on.C;
+    head = '<div class="verdict part"><div class="vl">Highest eligible tier</div><div class="vv">Tier ' + best.tier.replace(" Cond.", ", conditional") + ', Option ' + best.k + '</div>' +
+      '<div class="vw">' + (both
+        ? "Options B and C both qualify. They are not a fallback pair: B measures avoidance cost, C measures productivity contribution. Report both estimates and document the divergence, which carries information about the degree of market failure in water pricing."
+        : "Tier 1 conditions fail, which is the norm rather than the exception for water. Document the method, the data sources, and any adjustments made to achieve exchange-value compatibility, and report the tier in account metadata.") + '</div></div>';
+  }
+  $("m-out").innerHTML = head + '<div class="opts">' + OPTIONS.map(o =>
+    '<div class="opt ' + (on[o.k] ? "on" : "dead") + (best && o.k === best.k ? " best" : "") + '">' +
+    '<div class="oh"><span class="on-name">Option ' + o.k + ' &middot; ' + o.name + '</span>' +
+    '<span class="tag ' + (o.tier === "1" ? "t1" : "t2") + '">Tier ' + o.tier + '</span></div>' +
+    '<div class="od">' + o.desc + '</div>' +
+    '<div class="ov">' + (on[o.k] ? o.verify : "conditions not met") + '</div></div>').join("") + '</div>';
+}
+OPTIONS.forEach(o => $(o.cond).addEventListener("change", renderMethods));
+const M_PRESETS = {
+  "Murray-Darling Basin": {mA:1,mB:0,mC:1,mD:1,mF:0,mE:0},
+  "Netherlands": {mA:0,mB:1,mC:0,mD:0,mF:0,mE:0},
+  "Guadalquivir Basin": {mA:0,mB:0,mC:1,mD:0,mF:0,mE:0},
+  "High Plains Aquifer": {mA:0,mB:0,mC:1,mD:0,mF:0,mE:0},
+  "Data-sparse basin": {mA:0,mB:0,mC:0,mD:0,mF:0,mE:1},
+  "Nothing available": {mA:0,mB:0,mC:0,mD:0,mF:0,mE:0}
+};
+$("m-presets").innerHTML = Object.keys(M_PRESETS).map(k => '<button class="pbtn" data-mp="' + k + '">' + k + '</button>').join("");
+$("m-presets").querySelectorAll("[data-mp]").forEach(b => b.addEventListener("click", () => {
+  const p = M_PRESETS[b.dataset.mp];
+  Object.keys(p).forEach(id => { $(id).checked = !!p[id]; });
+  renderMethods();
+}));
+
+/* ---------------- valuation chain ---------------- */
+const sliders = {s0:$("sl-s0"), ext:$("sl-ext"), rec:$("sl-rec"), rent:$("sl-rent"), disc:$("sl-disc"), sub:$("sl-sub")};
+let pin = null;
+const fmtM = n => (n < 0 ? "−" : "") + "$" + Math.round(Math.abs(n)).toLocaleString() + "M";
+const fmt3 = n => "$" + n.toFixed(3);
+
+function computeV(s0, qt, gt, rt, disc){
+  const ft = rt * qt * 1000;
+  if (gt <= 0 && qt > 0){
+    const T = s0 / qt;
+    return {ft, V: ft * (1 - Math.pow(1 + disc, -T)) / disc,
+      method: "Finite-horizon NPV, T = S<sub>0</sub>/q<sub>t</sub> = " + T.toFixed(1) + " years. Annex A prohibits the perpetuity for non-recharging resources, since it overstates V and so overstates D<sub>t</sub>."};
+  }
+  return {ft, V: ft / disc, method: "Constant-rent perpetuity, V = F<sub>t</sub>/r, valid for an indefinite horizon where g<sub>t</sub> &gt; 0."};
+}
+
+function state(){
+  const s0 = +sliders.s0.value, qt = +sliders.ext.value, gt = +sliders.rec.value;
+  const rt = +sliders.rent.value, disc = +sliders.disc.value / 100, sub = +sliders.sub.value;
+  const {ft, V, method} = computeV(s0, qt, gt, rt, disc);
+  const pbar = (V / s0) / 1000;
+  let caseNum;
+  if (gt > 0){
+    const ratio = qt / gt;
+    caseNum = (ratio >= 0.95 && ratio <= 1.05) ? 2 : (qt > gt ? 1 : 3);
+  } else {
+    caseNum = (qt - gt) > 0 ? 1 : 2;
+  }
+  let dt = 0, add = 0, capped = false;
+  if (caseNum === 1){
+    const unit = Math.min(pbar, sub);
+    capped = (unit === sub && sub < pbar);
+    dt = unit * (qt - gt) * 1000;
+  } else if (caseNum === 3){
+    add = pbar * (gt - qt) * 1000;
+  }
+  const ocv = ft - qt * pbar * 1000;
+  const rev = pin ? pin.s0 * (pbar - pin.pbar) * 1000 : 0;
+  const deltaSS = s0 > 0 ? Math.abs(qt - gt) / s0 : 0;
+  return {s0, qt, gt, rt, disc, sub, ft, V, pbar, method, caseNum, dt, add, capped, ocv, rev, deltaSS,
+    vnext: V - dt + add + rev + ocv};
+}
+
+function run(){
+  const s = state();
+  $("v-s0").textContent = s.s0; $("v-ext").textContent = s.qt; $("v-rec").textContent = s.gt;
+  $("v-rent").textContent = s.rt.toFixed(2); $("v-disc").textContent = (s.disc * 100).toFixed(1);
+  $("v-sub").textContent = s.sub.toFixed(2);
+
+  $("out-ft").textContent = fmtM(s.ft);
+  $("out-v").textContent = fmtM(s.V);
+  $("out-pbar").textContent = fmt3(s.pbar);
+  $("out-method").innerHTML = s.method;
+  $("out-dt-label").innerHTML = s.caseNum === 3
+    ? 'Addition<sub>t</sub>, raises NDP <span class="ref">D.6</span>'
+    : 'Depletion charge D<sub>t</sub>, to NDP <span class="ref">D.5</span>';
+  $("out-dt").textContent = fmtM(s.caseNum === 3 ? s.add : s.dt);
+
+  let badge;
+  if (s.caseNum === 1){
+    badge = s.capped
+      ? '<div class="note warn"><strong>Case 1, substitute ceiling active.</strong> p&#772; exceeds the substitute price, so Recommendation 8 caps the charge at min(p&#772;, p<sub>sub</sub>). Annex E Example 4B is this case.</div>'
+      : '<div class="note warn"><strong>Case 1, over-extraction.</strong> A depletion charge is entered against NDP. Annex E Examples 1 to 3.</div>';
+  } else if (s.caseNum === 3){
+    badge = '<div class="note info"><strong>Case 3, under-extraction.</strong> The raw depletion calculation is negative and floors to zero. An addition is entered instead, which raises NDP. Annex E Example 6, and the subject of TC Question 1.</div>';
+  } else {
+    badge = '<div class="note ok"><strong>Case 2, sustainable extraction.</strong> D<sub>t</sub> = 0. Zero depletion indicates sustainable extraction, not absence of asset value: V remains positive wherever the resource carries a positive shadow price.</div>';
+  }
+  $("out-badge").innerHTML = badge;
+
+  let adv = "";
+  if (s.gt < 0){
+    adv += '<div class="note warn"><strong>g<sub>t</sub> is negative.</strong> Natural losses exceed additions before any extraction. Equation D.5 still runs, and max(0, q<sub>t</sub> &minus; g<sub>t</sub>) simply grows, booking the full natural loss as if it were extraction-driven. TC Question 2 asks whether this should route through the other-changes-in-volume line instead. Posed, not resolved: this runs the formula as written.</div>';
+  }
+  if (s.caseNum === 1 && s.deltaSS > 0.10){
+    adv += '<div class="note info"><strong>&Delta;S/S is ' + (s.deltaSS * 100).toFixed(0) + ' percent.</strong> The Harberger approximation is losing validity. Annex E Example 4 hits 31 percent and requires direct estimation of p* = &part;V/&part;S rather than the p&#772; = V/S shortcut used here.</div>';
+  }
+  $("out-advisory").innerHTML = adv;
+
+  $("pin-status").innerHTML = pin
+    ? "Pinned at p&#772; = " + fmt3(pin.pbar) + "/m&sup3;, S = " + pin.s0 + " km&sup3;. Change R<sub>t</sub> to see REV<sub>t</sub>."
+    : "Not pinned. REV<sub>t</sub> is zero in a single-period snapshot. Pin, then load Example 5B, to reproduce the cross-period comparison.";
+
+  renderAccount(s);
+}
+
+function renderAccount(s){
+  const rows = [
+    ["Opening value V<sub>t</sub>", "carried forward", s.V, false],
+    ["grp", "Additions", null, false],
+    ["Addition, under-extraction <span class='ref'>Case 3</span>", "(g<sub>t</sub> &minus; q<sub>t</sub>) &times; p&#772;<sub>t</sub>", s.add, s.add === 0],
+    ["grp", "Reductions", null, false],
+    ["Depletion charge D<sub>t</sub> <span class='ref'>Case 1</span>", "p&#772;<sub>t</sub> &times; (q<sub>t</sub> &minus; g<sub>t</sub>)", -s.dt, s.dt === 0],
+    ["grp", "Revaluation and other changes", null, false],
+    ["Revaluation REV<sub>t</sub>", "S<sub>t,open</sub> &times; (p&#772;<sub>t+1</sub> &minus; p&#772;<sub>t</sub>)", s.rev, s.rev === 0],
+    ["Other changes in volume OCV<sub>t</sub>", "F<sub>t</sub> &minus; (q<sub>t</sub> &times; p&#772;<sub>t</sub>)", s.ocv, false]
+  ];
+  let html = "";
+  rows.forEach(r => {
+    if (r[0] === "grp"){ html += '<tr class="grp"><td colspan="3">' + r[1] + '</td></tr>'; return; }
+    html += '<tr' + (r[3] ? ' class="zero"' : '') + '><td>' + r[0] + '</td><td class="f">' + r[1] + '</td><td class="v">' + fmtM(r[2]) + '</td></tr>';
   });
+  html += '<tr class="tot"><td>Closing value V<sub>t+1</sub></td><td class="f">V<sub>t</sub> + Addition<sub>t</sub> &minus; D<sub>t</sub> + REV<sub>t</sub> + OCV<sub>t</sub></td><td class="v">' + fmtM(s.vnext) + '</td></tr>';
+  $("acct-body").innerHTML = html;
 
-  $('btn-unpin').addEventListener('click', () => {
-    pin = null;
-    $('pin-status').textContent = 'Not pinned — REVₜ = 0 (single-period snapshot). Pin, then move Rₜ, to see REVₜ reproduce Annex E Ex. 5\'s cross-period comparison.';
-    $('btn-unpin').style.display = 'none';
-    run();
-  });
+  let notes = "";
+  if (s.rev === 0 && !pin){
+    notes += '<div class="note info">REV<sub>t</sub> is zero because no opening price is pinned. Pin p&#772; in section 06 and change R<sub>t</sub> to see the revaluation line move.</div>';
+  }
+  notes += '<div class="note ' + (s.ocv < 0 ? "warn" : "ok") + '">OCV<sub>t</sub> is ' + (s.ocv < 0 ? "negative" : "positive") + ' at ' + fmtM(s.ocv) + '. ' +
+    (s.ocv < 0
+      ? "Observed rent falls below the value embedded in the asset price, the diagnostic signal for administered pricing suppressing rent below scarcity value, and grounds for a Tier 2 method."
+      : "Current-period rent exceeds the approximated value of extraction, which happens when prices are temporarily elevated above long-run scarcity values or p&#772; understates the stock's long-run value. Under the Annex A perpetuity shortcut this is nonzero by construction and is not on its own a pricing signal.") + '</div>';
+  $("acct-notes").innerHTML = notes;
+}
 
-  Object.values(sliders).forEach(s => s.addEventListener('input', run));
+function setSliders(v){
+  sliders.s0.value = v.s0; sliders.ext.value = v.qt; sliders.rec.value = v.gt;
+  sliders.rent.value = v.rt; sliders.disc.value = v.disc;
+  if (v.sub !== undefined) sliders.sub.value = v.sub;
   run();
+}
+Object.values(sliders).forEach(sl => sl.addEventListener("input", run));
+
+$("sim-presets").innerHTML = EXAMPLES.map(e => '<button class="pbtn" data-p="' + e.k + '">' + e.label + '</button>').join("");
+$("sim-presets").querySelectorAll("[data-p]").forEach(b => b.addEventListener("click", () => setSliders(PRESETS[b.dataset.p])));
+$("annexe").innerHTML = EXAMPLES.map(e => "<p>" + e.t + "</p>").join("");
+
+$("btn-pin").addEventListener("click", () => {
+  const s = state();
+  pin = {pbar: s.pbar, s0: s.s0};
+  $("btn-unpin").hidden = false;
+  run();
+});
+$("btn-unpin").addEventListener("click", () => {
+  pin = null; $("btn-unpin").hidden = true; run();
+});
+
+/* ---------------- init ---------------- */
+renderRecs("all");
+renderQs("all");
+renderScope();
+renderMethods();
+run();
+go(UNSLUG[location.hash.slice(1)] || "overview", false);
 </script>
+
 </body>
 </html>
